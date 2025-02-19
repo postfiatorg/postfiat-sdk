@@ -1,4 +1,10 @@
 import datetime
+import os
 
-now = datetime.datetime.now()
-__version__ = f"0.1.0a{now.strftime('%Y%m%d%H%M')}"
+RELEASE_VERSION = "0.1.0"
+
+if os.getenv('GITHUB_EVENT_NAME') == 'release':
+    __version__ = RELEASE_VERSION
+else:
+    now = datetime.datetime.now()
+    __version__ = f"{RELEASE_VERSION}a{now.strftime('%Y%m%d%H%M')}"
