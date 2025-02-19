@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling~=1.26.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -30,7 +30,3 @@ packages = ["src/postfiat"]
 [tool.hatch.version]
 source = "code"
 path = "__about__.py"
-
-[tool.hatch.metadata]
-allow-direct-references = false
-metadata-version = "2.3"
