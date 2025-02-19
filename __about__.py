@@ -1,3 +1,1 @@
-import time
-
-__version__ = f"0.1.0a{int(time.time())}"
+__version__ = "0.1.0"
