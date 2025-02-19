@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "postfiat-sdk"
+dynamic = ["version"]
+description = "SDK for the Post Fiat Network"
+requires-python = ">=3.12"
+dependencies = [
+    "aiofiles~=24.1.0",
+    "brotli~=1.1.0",
+    "cryptography~=44.0.0",
+    "pydantic~=2.10.6",
+    "pynacl~=1.5.0",
+    "xrpl-py~=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest~=8.3.4",
+    "pytest-asyncio~=0.25.3",
+    "hatch~=1.14.0",
+    "hatchling~=1.27.0",
+]
+
+[tool.hatch.version]
+source = "code"
+path = "__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/postfiat"]
