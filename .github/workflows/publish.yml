@@ -27,6 +27,4 @@ jobs:
       run: hatch build
     
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.14
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }} 
+      uses: pypa/gh-action-pypi-publish@v1.8.14 
