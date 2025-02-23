@@ -46,6 +46,8 @@ class LogStatus(Enum):
 @dataclass
 class TaskState:
     status: TaskStatus = TaskStatus.INVALID
+    task_statement: str | None = None
+    challenge_statement: str | None = None
     pft_offered: Decimal | None = None
     pft_rewarded: Decimal | None = None
     message_history: list[(Direction, str)] = field(default_factory=list)
@@ -60,6 +62,7 @@ class TaskState:
                 if self.status == TaskStatus.REQUESTED:
                     self.status = TaskStatus.PROPOSED
                     self.pft_offered = msg.pft_offer
+                    self.task_statement = msg.message
             case UserAcceptanceMessage():
                 if self.status == TaskStatus.PROPOSED:
                     self.status = TaskStatus.ACCEPTED
@@ -75,6 +78,7 @@ class TaskState:
             case NodeChallengeMessage():
                 if self.status == TaskStatus.COMPLETED:
                     self.status = TaskStatus.CHALLENGED
+                    self.challenge_statement = msg.message
             case UserChallengeResponseMessage():
                 if self.status == TaskStatus.CHALLENGED:
                     self.status = TaskStatus.RESPONDED
@@ -115,6 +119,7 @@ class LogState:
 @dataclass
 class AccountState:
     init_rite_status: RiteStatus = RiteStatus.UNSTARTED
+    init_rite_statement: str | None = None
     context_doc_link: str | None = None
     sweep_address: str | None = None
     is_blacklisted: bool = False
@@ -152,6 +157,7 @@ class AccountState:
                 case UserInitiationRiteMessage():
                     if self.init_rite_status == RiteStatus.UNSTARTED:
                         self.init_rite_status = RiteStatus.UNDERWAY
+                        self.init_rite_statement = msg.message
                 case NodeWalletFundingMessage():
                     pass
                 case NodeInitiationRewardMessage():
