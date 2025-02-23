@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum, auto
 import os
@@ -50,10 +51,10 @@ class TaskState:
     challenge_statement: str | None = None
     pft_offered: Decimal | None = None
     pft_rewarded: Decimal | None = None
-    message_history: list[(Direction, str)] = field(default_factory=list)
+    message_history: list[(datetime, Direction, str)] = field(default_factory=list)
 
     def update(self, msg: TaskMessage):
-        self.message_history.append((msg.direction, msg.raw_data))
+        self.message_history.append((msg.timestamp, msg.direction, msg.raw_data))
         match msg:
             case UserRequestMessage():
                 if self.status == TaskStatus.INVALID:
@@ -89,7 +90,8 @@ class TaskState:
                     self.pft_rewarded = msg.amount_pft
 
     def data(self) -> str:
-        return f'{os.linesep}'.join(f'{direction}: {data}' for direction, data in self.message_history)
+        return f'{os.linesep}'.join(f'{timestamp.date().isoformat()} - {direction}: {data}'
+            for timestamp, direction, data in self.message_history)
 
     def __repr__(self):
         return f"TaskState(status={self.status}, pft_offered={self.pft_offered}, pft_rewarded={self.pft_rewarded})"
@@ -98,6 +100,7 @@ class TaskState:
 @dataclass
 class LogState:
     status: LogStatus = LogStatus.INVALID
+    timestamp: datetime | None = None
     request: str | None = None
     response: str | None = None
 
@@ -106,12 +109,13 @@ class LogState:
             case UserLogMessage():
                 self.status = LogStatus.REQUESTED
                 self.request = msg.message
+                self.timestamp = msg.timestamp
             case NodeLogResponseMessage():
                 self.status = LogStatus.RESPONDED
                 self.response = msg.message
 
     def data(self) -> str:
-        return f'{self.status}: {self.request} -> {self.response}'
+        return f'{self.timestamp.date().isoformat()} - {self.request} -> {self.response}'
 
     def __repr__(self):
         return f"LogState(status={self.status}, request={self.request}, response={self.response})"
@@ -125,7 +129,7 @@ class AccountState:
     is_blacklisted: bool = False
     tasks: dict[str, TaskState] = field(default_factory=lambda: defaultdict(TaskState))
     logs: dict[str, LogState] = field(default_factory=lambda: defaultdict(LogState))
-    account_message_history: list[(Direction, str)] = field(default_factory=list)
+    account_message_history: list[(datetime, Direction, str)] = field(default_factory=list)
 
     def status(self) -> AccountStatus:
         if self.is_blacklisted:
@@ -143,7 +147,7 @@ class AccountState:
         if status == AccountStatus.BLACKLISTED:
             return
 
-        self.account_message_history.append((msg.direction, msg.raw_data))
+        self.account_message_history.append((msg.timestamp, msg.direction, msg.raw_data))
         if msg.scope == Scope.TASK:
             if status == AccountStatus.ACTIVE:
                 self.tasks[msg.task_id].update(msg)
@@ -169,7 +173,7 @@ class AccountState:
                     self.is_blacklisted = True
 
     def data(self) -> str:
-        return f'{os.linesep}'.join(f'{direction}: {data}' for direction, data in self.account_message_history)
+        return f'{os.linesep}'.join(f'{timestamp.date().isoformat()} - {direction}: {data}' for timestamp, direction, data in self.account_message_history)
 
     def all_data(self) -> str:
         return f'{os.linesep}'.join([
