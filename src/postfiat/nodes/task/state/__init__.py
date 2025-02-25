@@ -48,8 +48,11 @@ class LogStatus(Enum):
 @dataclass
 class TaskState:
     status: TaskStatus = TaskStatus.INVALID
+    task_request: str | None = None
     task_statement: str | None = None
+    completion_statement: str | None = None
     challenge_statement: str | None = None
+    challenge_response: str | None = None
     pft_offered: Decimal | None = None
     pft_rewarded: Decimal | None = None
     message_history: list[(datetime, Direction, str)] = field(default_factory=list)
@@ -60,6 +63,7 @@ class TaskState:
             case UserRequestMessage():
                 if self.status == TaskStatus.INVALID:
                     self.status = TaskStatus.REQUESTED
+                    self.task_request = msg.message
             case NodeProposalMessage():
                 if self.status == TaskStatus.REQUESTED:
                     self.status = TaskStatus.PROPOSED
@@ -77,6 +81,7 @@ class TaskState:
             case UserCompletionMessage():
                 if self.status == TaskStatus.ACCEPTED:
                     self.status = TaskStatus.COMPLETED
+                    self.completion_statement = msg.message
             case NodeChallengeMessage():
                 if self.status == TaskStatus.COMPLETED:
                     self.status = TaskStatus.CHALLENGED
@@ -84,6 +89,7 @@ class TaskState:
             case UserChallengeResponseMessage():
                 if self.status == TaskStatus.CHALLENGED:
                     self.status = TaskStatus.RESPONDED
+                    self.challenge_response = msg.message
             case NodeRewardMessage():
                 if self.status == TaskStatus.RESPONDED:
                     self.status = TaskStatus.REWARDED
