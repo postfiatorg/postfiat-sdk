@@ -41,6 +41,7 @@ class TaskStatus(Enum):
 
 class LogStatus(Enum):
     INVALID = auto()
+    LOGGED = auto()
     REQUESTED = auto()
     RESPONDED = auto()
 
@@ -104,10 +105,16 @@ class LogState:
     request: str | None = None
     response: str | None = None
 
+    def __needs_response(self, msg: Message) -> bool:
+        return 'ODV' in msg.message
+
     def update(self, msg: Message):
         match msg:
             case UserLogMessage():
-                self.status = LogStatus.REQUESTED
+                if self.__needs_response(msg):
+                    self.status = LogStatus.REQUESTED
+                else:
+                    self.status = LogStatus.LOGGED
                 self.request = msg.message
                 self.timestamp = msg.timestamp
             case NodeLogResponseMessage():
@@ -175,11 +182,17 @@ class AccountState:
     def data(self) -> str:
         return f'{os.linesep}'.join(f'{timestamp.date().isoformat()} - {direction}: {data}' for timestamp, direction, data in self.account_message_history)
 
+    def task_data(self) -> str:
+        return f'{os.linesep}'.join(task.data() for task in self.tasks.values())
+
+    def log_data(self) -> str:
+        return f'{os.linesep}'.join(log.data() for log in self.logs.values())
+
     def all_data(self) -> str:
         return f'{os.linesep}'.join([
             self.data(),
-            *[task.data() for task in self.tasks.values()],
-            *[log.data() for log in self.logs.values()]
+            self.task_data(),
+            self.log_data(),
         ])
 
     def __repr__(self):
