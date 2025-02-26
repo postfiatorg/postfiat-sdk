@@ -6,3 +6,7 @@ class CacheError(Exception):
 
 class RpcFetchError(Exception):
     pass
+
+
+class RpcSendError(Exception):
+    pass

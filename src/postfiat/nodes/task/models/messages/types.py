@@ -29,7 +29,7 @@ class NodeRewardMessage(NodeToUserMixin, TaskMixin, Message):
     #pft_reward: Decimal
 
 class NodeBlacklistMessage(NodeToUserMixin, AccountMixin, Message):
-    pass
+    message: str
 
 # User to Node messages
 class UserHandshakeMessage(UserToNodeMixin, AccountMixin, Message):
