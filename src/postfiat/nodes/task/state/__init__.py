@@ -51,6 +51,7 @@ class LogStatus(Enum):
 @dataclass
 class TaskState:
     status: TaskStatus = TaskStatus.INVALID
+    timestamp: datetime | None = None
     task_request: str | None = None
     task_statement: str | None = None
     completion_statement: str | None = None
@@ -61,6 +62,7 @@ class TaskState:
     message_history: list[(datetime, Direction, str)] = field(default_factory=list)
 
     def update(self, msg: TaskMessage):
+        self.timestamp = msg.timestamp
         self.message_history.append((msg.timestamp, msg.direction, msg.raw_data))
         match msg:
             case UserRequestMessage():
