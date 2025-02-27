@@ -118,6 +118,7 @@ class LogState:
         return 'ODV' in msg.message
 
     def update(self, msg: Message):
+        self.timestamp = msg.timestamp
         match msg:
             case UserLogMessage():
                 if self.__needs_response(msg):
@@ -125,7 +126,6 @@ class LogState:
                 else:
                     self.status = LogStatus.LOGGED
                 self.request = msg.message
-                self.timestamp = msg.timestamp
             case NodeLogResponseMessage():
                 self.status = LogStatus.RESPONDED
                 self.response = msg.message
