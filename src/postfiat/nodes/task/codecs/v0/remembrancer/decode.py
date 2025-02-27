@@ -2,6 +2,7 @@ from collections import defaultdict
 import operator
 import os
 from typing import AsyncIterator
+import logging
 
 from xrpl.wallet import Wallet
 
@@ -9,6 +10,8 @@ from postfiat.models.transaction import Transaction, UNKNOWN_TOTAL_CHUNKS
 from postfiat.nodes.task.codecs.v0.errors import DecodingError
 from postfiat.nodes.task.codecs.v0.serialization import dechunk_txns, decompress_txn, decrypt_txn, is_txn_encrypted
 from postfiat.nodes.task.models.messages import Message, UserLogMessage, NodeLogResponseMessage
+
+log = logging.getLogger(__name__)
 
 MAX_CHUNKS = 20
 
@@ -55,7 +58,7 @@ def _filter(txn: Transaction, *, node_account: Wallet | str, user_account: Walle
             txn.memo_type
         )
     except (KeyError, TypeError, IndexError, AttributeError) as e:
-        print(f'error filtering txn: {e}')
+        log.debug(f'error filtering txn: {e}')
         return False
 
 
@@ -114,7 +117,7 @@ def decode_account_txn(txns: Transaction | list[Transaction], *, node_account: W
     try:
         msg = _build(txns, node_account=node_account, user_account=user_account)
     except Exception as e:
-        print(f'error building message: {e}')
+        log.debug(f'error building message: {e}')
     return msg
 
 
@@ -126,14 +129,14 @@ async def decode_account_stream(txns: AsyncIterator[Transaction], *, node_accoun
                 if msg := decode_account_txn(txn, node_account=node_account, user_account=user_account):
                     yield msg
             elif isinstance(txn.total_chunks, int) and txn.total_chunks > MAX_CHUNKS:
-                print(f'skipping txn with too many chunks: {txn.total_chunks} (limit: {MAX_CHUNKS})')
+                log.debug(f'skipping txn with too many chunks: {txn.total_chunks} (limit: {MAX_CHUNKS})')
             elif txn.chunk_aggregation_key:
                 buf = txn_buffer[txn.chunk_aggregation_key]
                 buf.append(txn)
                 buf.sort(key=operator.attrgetter('chunk_number'))
                 if len(buf) > MAX_CHUNKS:
                     # we have too many chunks, drop all of them
-                    print(f'too many chunks for txn {txn.chunk_aggregation_key}: {len(buf)} (limit: {MAX_CHUNKS}), dropping all chunks')
+                    log.debug(f'too many chunks for txn {txn.chunk_aggregation_key}: {len(buf)} (limit: {MAX_CHUNKS}), dropping all chunks')
                     del txn_buffer[txn.chunk_aggregation_key]
                 elif len(buf) == txn.total_chunks:
                     # we have all expected chunks
@@ -150,7 +153,7 @@ async def decode_account_stream(txns: AsyncIterator[Transaction], *, node_accoun
                         yield msg
                     del txn_buffer[txn.chunk_aggregation_key]
             else:
-                print(f'inconsistent chunking params: {txn}')
+                log.debug(f'inconsistent chunking params: {txn}')
         except Exception as e:
             if txn.total_chunks == 1:
-                print(f'error decoding txn: {e} -- raw txn:{os.linesep}{txn}')
+                log.debug(f'error decoding txn: {e} -- raw txn:{os.linesep}{txn}')

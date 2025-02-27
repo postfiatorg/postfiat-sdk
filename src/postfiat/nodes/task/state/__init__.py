@@ -4,6 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum, auto
 import os
+import logging
 
 from postfiat.nodes.task.models.messages import (
     Message, TaskMessage, Direction,
@@ -15,6 +16,8 @@ from postfiat.nodes.task.models.messages import (
     UserChallengeResponseMessage, NodeRewardMessage,
     UserSweepAddressMessage, NodeBlacklistMessage,
 )
+
+log = logging.getLogger(__name__)
 
 class AccountStatus(Enum):
     INVALID = auto()
@@ -218,9 +221,9 @@ class NodeState:
         if msg.ledger_seq > latest_ledger_seq or (msg.ledger_seq == latest_ledger_seq and msg.transaction_seq > latest_txn_seq):
             self.latest_ledger_seq = (msg.ledger_seq, msg.transaction_seq)
         elif msg.ledger_seq == latest_ledger_seq and msg.transaction_seq == latest_txn_seq:
-            print(f'duplicate ledger seq for msg {msg.hash}')
+            log.debug(f'duplicate ledger seq for msg {msg.hash}')
         else:
-            print(f'out of order ledger seq for msg {msg.hash}')
+            log.debug(f'out of order ledger seq for msg {msg.hash}')
 
     def __repr__(self):
         return f"{self.__class__.__name__}(accounts={self.accounts}, latest_ledger_seq={self.latest_ledger_seq})"
@@ -240,9 +243,9 @@ class UserState:
         if msg.ledger_seq > latest_ledger_seq or (msg.ledger_seq == latest_ledger_seq and msg.transaction_seq > latest_txn_seq):
             self.latest_ledger_seq = (msg.ledger_seq, msg.transaction_seq)
         elif msg.ledger_seq == latest_ledger_seq and msg.transaction_seq == latest_txn_seq:
-            print(f'duplicate ledger seq for msg {msg.hash}')
+            log.debug(f'duplicate ledger seq for msg {msg.hash}')
         else:
-            print(f'out of order ledger seq for msg {msg.hash}')
+            log.debug(f'out of order ledger seq for msg {msg.hash}')
 
     def __repr__(self):
         return f"{self.__class__.__name__}(node_account={self.node_account}, latest_ledger_seq={self.latest_ledger_seq})"

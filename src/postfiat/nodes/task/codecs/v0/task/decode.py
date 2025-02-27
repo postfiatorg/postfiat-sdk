@@ -2,6 +2,7 @@ from decimal import Decimal
 import os
 import re
 from typing import AsyncIterator
+import logging
 
 from xrpl.wallet import Wallet
 
@@ -16,6 +17,8 @@ from postfiat.nodes.task.models.messages import (
     NodeInitiationRewardMessage, NodeProposalMessage, NodeChallengeMessage,
     NodeRewardMessage, NodeBlacklistMessage,
 )
+
+log = logging.getLogger(__name__)
 
 REGEX_TASK_ID = re.compile(r'\d{4}-\d{2}-\d{2}_\d{2}:\d{2}__[A-Z]{2}[0-9]{2}')
 REGEX_TASK_DATA = re.compile(r'([A-Z _]*[A-Z]) ___? ?([\S\s]*)$')
@@ -87,7 +90,7 @@ def _filter(txn: Transaction, *, node_account: Wallet | str, user_account: Walle
             txn.memo_type
         )
     except (KeyError, TypeError, IndexError, AttributeError) as e:
-        print(f'error filtering txn: {e}')
+        log.debug(f'error filtering txn: {e}')
         return False
 
 def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account: Wallet | None) -> Message:
@@ -257,7 +260,7 @@ def decode_account_txn(txns: Transaction | list[Transaction], *, node_account: W
     try:
         msg = _build(txns, node_account=node_account, user_account=user_account)
     except Exception as e:
-        print(f'error building message: {e}')
+        log.debug(f'error building message: {e}')
         raise
     return msg
 
@@ -268,5 +271,5 @@ async def decode_account_stream(txns: AsyncIterator[Transaction], *, node_accoun
             if msg := decode_account_txn(txn, node_account=node_account, user_account=user_account):
                 yield msg
         except Exception as e:
-            print(f'error decoding txn: {e} -- raw txn:{os.linesep}{txn}')
+            log.debug(f'error decoding txn: {e} -- raw txn:{os.linesep}{txn}')
 
