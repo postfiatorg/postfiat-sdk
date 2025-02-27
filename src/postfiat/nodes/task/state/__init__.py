@@ -57,6 +57,7 @@ class TaskState:
     completion_statement: str | None = None
     challenge_statement: str | None = None
     challenge_response: str | None = None
+    reward_statement: str | None = None
     pft_offered: Decimal | None = None
     pft_rewarded: Decimal | None = None
     message_history: list[(datetime, Direction, str)] = field(default_factory=list)
@@ -98,6 +99,7 @@ class TaskState:
             case NodeRewardMessage():
                 if self.status == TaskStatus.RESPONDED:
                     self.status = TaskStatus.REWARDED
+                    self.reward_statement = msg.message
                     #self.pft_rewarded = msg.pft_reward
                     self.pft_rewarded = msg.amount_pft
 
