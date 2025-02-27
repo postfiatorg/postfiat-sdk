@@ -100,7 +100,7 @@ class TaskState:
                     self.pft_rewarded = msg.amount_pft
 
     def data(self) -> str:
-        return f'{os.linesep}'.join(f'{timestamp.date().isoformat()} - {direction}: {data}'
+        return f'{os.linesep}'.join(f'{timestamp.date().isoformat() if timestamp else timestamp} - {direction}: {data}'
             for timestamp, direction, data in self.message_history)
 
     def __repr__(self):
@@ -131,7 +131,7 @@ class LogState:
                 self.response = msg.message
 
     def data(self) -> str:
-        return f'{self.timestamp.date().isoformat()} - {self.request} -> {self.response}'
+        return f'{self.timestamp.date().isoformat() if self.timestamp else self.timestamp} - {self.request} -> {self.response}'
 
     def __repr__(self):
         return f"LogState(status={self.status}, request={self.request}, response={self.response})"
@@ -189,7 +189,7 @@ class AccountState:
                     self.is_blacklisted = True
 
     def data(self) -> str:
-        return f'{os.linesep}'.join(f'{timestamp.date().isoformat()} - {direction}: {data}' for timestamp, direction, data in self.account_message_history)
+        return f'{os.linesep}'.join(f'{timestamp.date().isoformat() if timestamp else timestamp} - {direction}: {data}' for timestamp, direction, data in self.account_message_history)
 
     def task_data(self) -> str:
         return f'{os.linesep}'.join(task.data() for task in self.tasks.values())
