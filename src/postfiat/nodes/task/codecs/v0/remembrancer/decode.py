@@ -87,6 +87,7 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
     node_address = node_account if isinstance(node_account, str) else node_account.address
     if txn.to_address == node_address: # user to node
         txn_properties['user_wallet'] = txn.from_address
+        txn_properties['user_pubkey'] = txn.from_pubkey
         txn_properties['node_wallet'] = txn.to_address
         return UserLogMessage(
             **txn_properties,
@@ -96,6 +97,7 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
     elif txn.from_address == node_address: # node to user
         txn_properties['user_wallet'] = txn.to_address
         txn_properties['node_wallet'] = txn.from_address
+        txn_properties['node_pubkey'] = txn.from_pubkey
         return NodeLogResponseMessage(
             **txn_properties,
             message_id=txn.memo_type,

@@ -142,6 +142,7 @@ class LogState:
 
 @dataclass
 class AccountState:
+    pubkey: str | None = None
     init_rite_status: RiteStatus = RiteStatus.UNSTARTED
     init_rite_statement: str | None = None
     context_doc_link: str | None = None
@@ -163,6 +164,8 @@ class AccountState:
             return AccountStatus.ACTIVE
 
     def update(self, msg: Message):
+        self.pubkey = msg.user_pubkey
+
         status = self.status()
         if status == AccountStatus.BLACKLISTED:
             return

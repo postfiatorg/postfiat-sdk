@@ -24,6 +24,8 @@ class Message(ABC, BaseModel):
     raw_data: str | None = None
     ledger_seq: int | None = None
     transaction_seq: int | None = None
+    user_pubkey: str | None = None
+    node_pubkey: str | None = None
 
     def __lt__(self, other: Self) -> bool:
         return (self.ledger_seq, self.transaction_seq) < (other.ledger_seq, other.transaction_seq)

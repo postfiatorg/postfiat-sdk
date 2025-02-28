@@ -126,6 +126,7 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
     
     if txn.to_address == node_account: # user to node
         txn_properties['user_wallet'] = txn.from_address
+        txn_properties['user_pubkey'] = txn.from_pubkey
         txn_properties['node_wallet'] = txn.to_address
         match txn.memo_type:
             case AccountTypeLabels.HANDSHAKE:
@@ -188,6 +189,7 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
     elif txn.from_address == node_account: # node to user
         txn_properties['user_wallet'] = txn.to_address
         txn_properties['node_wallet'] = txn.from_address
+        txn_properties['node_pubkey'] = txn.from_pubkey
         match txn.memo_type:
             case AccountTypeLabels.HANDSHAKE:
                 return NodeHandshakeMessage(
