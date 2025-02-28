@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 
 MAX_CHUNKS = 20
 
+RESPONSE_SUFFIX = '_response'
+
 # shared cache of pubkeys for memo decryption
 # should be relatively safe to use module cache since
 # each address only has one possible pubkey
@@ -38,7 +40,6 @@ def __maybe_decrypt_txn(txn: Transaction, our_wallet: Wallet | None) -> Transact
         pubkey = __get_key(txn, our_wallet.address)
         txn = decrypt_txn(txn, pubkey, our_wallet.private_key)
     return txn
-
 
 
 def _filter(txn: Transaction, *, node_account: Wallet | str, user_account: Wallet | None) -> bool:
@@ -98,9 +99,12 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
         txn_properties['user_wallet'] = txn.to_address
         txn_properties['node_wallet'] = txn.from_address
         txn_properties['node_pubkey'] = txn.from_pubkey
+        message_id = txn.memo_type
+        if message_id.endswith(RESPONSE_SUFFIX):
+            message_id = message_id[:-len(RESPONSE_SUFFIX)]
         return NodeLogResponseMessage(
             **txn_properties,
-            message_id=txn.memo_type,
+            message_id=message_id,
             message=txn.memo_data,
         )
     else:
