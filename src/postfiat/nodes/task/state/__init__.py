@@ -6,6 +6,7 @@ from enum import Enum, auto
 import os
 import logging
 
+from postfiat.nodes.task.constants import EARLIEST_LEDGER_SEQ
 from postfiat.nodes.task.models.messages import (
     Message, TaskMessage, Direction,
     UserGDocContextMessage, UserInitiationRiteMessage,
@@ -217,7 +218,7 @@ class AccountState:
 @dataclass
 class NodeState:
     accounts: dict[str, AccountState] = field(default_factory=lambda: defaultdict(AccountState))
-    latest_ledger_seq: tuple[int, int] = (0, 0)
+    latest_ledger_seq: tuple[int, int] = (EARLIEST_LEDGER_SEQ, 0)
 
     def update(self, msg: Message):
         self.__update_latest_ledger_seq(msg)
@@ -239,7 +240,7 @@ class NodeState:
 @dataclass
 class UserState:
     node_account: AccountState = field(default_factory=AccountState)
-    latest_ledger_seq: tuple[int, int] = (0, 0)
+    latest_ledger_seq: tuple[int, int] = (EARLIEST_LEDGER_SEQ, 0)
 
     def update(self, msg: Message):
         self.__update_latest_ledger_seq(msg)

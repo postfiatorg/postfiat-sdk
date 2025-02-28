@@ -156,8 +156,8 @@ async def decode_account_stream(txns: AsyncIterator[Transaction], *, node_accoun
                 elif txn.total_chunks == UNKNOWN_TOTAL_CHUNKS:
                     # we don't know if we have all chunks, try it
                     if msg := decode_account_txn(buf, node_account=node_account, user_account=user_account):
+                        del txn_buffer[txn.chunk_aggregation_key]
                         yield msg
-                    del txn_buffer[txn.chunk_aggregation_key]
             else:
                 log.debug(f'inconsistent chunking params: {txn}')
         except Exception as e:
