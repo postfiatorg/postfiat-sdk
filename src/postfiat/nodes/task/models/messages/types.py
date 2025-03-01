@@ -28,6 +28,9 @@ class NodeRewardMessage(NodeToUserMixin, TaskMixin, Message):
     message: str
     #pft_reward: Decimal
 
+class NodeRefusalMessage(NodeToUserMixin, TaskMixin, Message):
+    message: str
+
 class NodeBlacklistMessage(NodeToUserMixin, AccountMixin, Message):
     message: str
 

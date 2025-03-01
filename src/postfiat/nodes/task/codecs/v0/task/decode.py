@@ -15,7 +15,7 @@ from postfiat.nodes.task.models.messages import (
     UserRefusalMessage, UserCompletionMessage, UserChallengeResponseMessage,
     NodeHandshakeMessage, NodeWalletFundingMessage,
     NodeInitiationRewardMessage, NodeProposalMessage, NodeChallengeMessage,
-    NodeRewardMessage, NodeBlacklistMessage,
+    NodeRewardMessage, NodeBlacklistMessage, NodeRefusalMessage,
 )
 
 log = logging.getLogger(__name__)
@@ -230,6 +230,11 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
                     )
                 case TaskTypeLabels.REWARD:
                     return NodeRewardMessage(
+                        **txn_properties,
+                        message=task_data,
+                    )
+                case TaskTypeLabels.REFUSAL:
+                    return NodeRefusalMessage(
                         **txn_properties,
                         message=task_data,
                     )
