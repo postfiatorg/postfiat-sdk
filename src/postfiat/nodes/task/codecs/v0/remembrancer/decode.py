@@ -9,7 +9,7 @@ from xrpl.wallet import Wallet
 from postfiat.models.transaction import Transaction, UNKNOWN_TOTAL_CHUNKS
 from postfiat.nodes.task.codecs.v0.errors import DecodingError
 from postfiat.nodes.task.codecs.v0.serialization import dechunk_txns, decompress_txn, decrypt_txn, is_txn_encrypted
-from postfiat.nodes.task.models.messages import Message, UserLogMessage, NodeLogResponseMessage
+from postfiat.nodes.task.models.messages import Message, UserLogMessage, NodeLogResponseMessage, NodeRefusalMessage
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +99,13 @@ def _build(txns: list[Transaction], *, node_account: Wallet | str, user_account:
         txn_properties['user_wallet'] = txn.to_address
         txn_properties['node_wallet'] = txn.from_address
         txn_properties['node_pubkey'] = txn.from_pubkey
+
+        if txn.memo_type == 'REFUSAL REASON':
+            return NodeRefusalMessage(
+                **txn_properties,
+                message=txn.memo_data,
+            )
+
         message_id = txn.memo_type
         if message_id.endswith(RESPONSE_SUFFIX):
             message_id = message_id[:-len(RESPONSE_SUFFIX)]

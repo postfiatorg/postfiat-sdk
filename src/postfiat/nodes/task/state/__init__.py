@@ -15,7 +15,7 @@ from postfiat.nodes.task.models.messages import (
     UserRequestMessage, NodeProposalMessage, UserAcceptanceMessage,
     UserRefusalMessage, UserCompletionMessage, NodeChallengeMessage,
     UserChallengeResponseMessage, NodeRewardMessage,
-    UserSweepAddressMessage, NodeBlacklistMessage,
+    UserSweepAddressMessage, NodeBlacklistMessage, NodeRefusalMessage,
 )
 
 log = logging.getLogger(__name__)
@@ -79,12 +79,9 @@ class TaskState:
             case UserAcceptanceMessage():
                 if self.status == TaskStatus.PROPOSED:
                     self.status = TaskStatus.ACCEPTED
-            case UserRefusalMessage():
-                if self.status in (
-                    TaskStatus.PROPOSED, TaskStatus.ACCEPTED,
-                    TaskStatus.COMPLETED, TaskStatus.CHALLENGED
-                ):
-                    self.status = TaskStatus.REFUSED
+            case UserRefusalMessage() | NodeRefusalMessage():
+                # refusals can occur from any status
+                self.status = TaskStatus.REFUSED
             case UserCompletionMessage():
                 if self.status == TaskStatus.ACCEPTED:
                     self.status = TaskStatus.COMPLETED
