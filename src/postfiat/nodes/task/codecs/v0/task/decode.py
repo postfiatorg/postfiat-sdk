@@ -86,7 +86,6 @@ def _filter(txn: Transaction, *, node_account: Wallet | str, user_account: Walle
             node_account in [txn.to_address, txn.from_address] and
             (user_account is None or user_account in [txn.to_address, txn.from_address]) and
             txn.memo_data and
-            txn.memo_format and
             txn.memo_type
         )
     except (KeyError, TypeError, IndexError, AttributeError) as e:

@@ -22,7 +22,7 @@ def encode_account_msg(msg: Message, *, node_account: Wallet | str, user_account
     if isinstance(user_account, str) and not user_account.startswith('ED'):
         raise ValueError('user_account must be a valid public key or Wallet instance')
 
-    if txns := encode_common_msg(msg, node_account, user_account):
+    if txns := encode_common_msg(msg, node_account=node_account, user_account=user_account):
         return txns
 
     from_address = msg.user_wallet if msg.direction == Direction.USER_TO_NODE else msg.node_wallet
