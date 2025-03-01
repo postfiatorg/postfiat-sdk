@@ -5,7 +5,7 @@ import re
 from typing import Any, Self
 
 from pydantic import BaseModel
-from xrpl.utils import hex_to_str
+from xrpl.utils import hex_to_str, str_to_hex
 
 from postfiat.nodes.task.constants import TOKEN, TOKEN_ISSUER
 
@@ -93,19 +93,19 @@ class Transaction(BaseModel):
         if self.data is not None:
             return self.data
         return {
-            'Account': self.from_address,
-            'TransactionType': 'Payment',
-            'Memos': [{
-                'Memo': {
-                    'MemoData': self.memo_data,
-                    'MemoFormat': self.memo_format,
-                    'MemoType': self.memo_type,
+            'account': self.from_address,
+            'transaction_type': 'Payment',
+            'memos': [{
+                'memo': {
+                    'memo_data': str_to_hex(self.memo_data),
+                    'memo_format': str_to_hex(self.memo_format),
+                    'memo_type': str_to_hex(self.memo_type),
                 }
             }],
-            'DeliverMax': {
+            'amount': {
                 'currency': TOKEN,
                 'issuer': TOKEN_ISSUER,
                 'value': str(self.amount_pft),
             },
-            'Destination': self.to_address,
+            'destination': self.to_address,
         }

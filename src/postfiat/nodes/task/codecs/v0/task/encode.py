@@ -11,7 +11,7 @@ def encode_account_msg(msg: Message, *, node_account: Wallet | str | None = None
     if not isinstance(user_account, Wallet) and msg.direction == Direction.USER_TO_NODE:
         raise ValueError('user_account must be a Wallet instance if message is direction NODE_TO_USER')
 
-    if txns := encode_common_msg(msg, node_account, user_account):
+    if txns := encode_common_msg(msg, node_account=node_account, user_account=user_account):
         return txns
 
     if msg.direction == Direction.NODE_TO_USER:
