@@ -27,7 +27,7 @@ def encode_account_msg(msg: Message, *, node_account: Wallet | str, user_account
             case NodeRefusalMessage():
                 return [
                     Transaction(**params,
-                                memo_type='TODO',
+                                memo_type='REFUSAL REASON',
                                 memo_data=msg.message),
                 ]
 

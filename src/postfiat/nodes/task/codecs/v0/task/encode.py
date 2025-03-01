@@ -29,11 +29,11 @@ def encode_account_msg(msg: Message, *, node_account: Wallet | str | None = None
         match msg:
             case NodeWalletFundingMessage():
                 return [Transaction(**params,
-                                    memo_type='TODO')]
+                                    memo_type='discord_wallet_funding')]
 
             case NodeInitiationRewardMessage():
                 return [Transaction(**params,
-                                    memo_type='TODO',
+                                    memo_type='INITIATION_REWARD',
                                     memo_data=msg.message)]
 
             case NodeProposalMessage():
