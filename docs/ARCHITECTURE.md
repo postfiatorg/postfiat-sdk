@@ -746,7 +746,7 @@ graph TB
     API3 --> QUEUE
 
     %% External service connections  
-    AI_SVC --> OPENAI[OPENAI]
+    AI_SVC --> OPENAI
     AI_SVC --> ANTHROPIC
 
     %% Monitoring connections
