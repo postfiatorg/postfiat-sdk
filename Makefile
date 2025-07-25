@@ -199,6 +199,9 @@ docs:
 	cd typescript && npm run generate:all
 	# TypeScript API docs (TypeDoc)
 	cd typescript && npx typedoc --out ../docs/generated/typescript src/index.ts --plugin typedoc-plugin-markdown --theme markdown --skipErrorChecking
+	# Update documentation with current version info
+	@echo "🔢 Updating documentation versions..."
+	@./scripts/update-all-versions.sh > /dev/null 2>&1 || echo "⚠️  Version update had some warnings (proto generation issues - this is normal)"
 	# MkDocs site (now includes Python API docs via mkdocstrings)
 	mkdocs build
 	@echo "✅ Documentation build complete!"

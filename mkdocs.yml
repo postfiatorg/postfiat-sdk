@@ -1,6 +1,12 @@
 site_name: PostFiat SDK Documentation
 site_url: https://postfiat.org/postfiat-sdk/
 
+extra:
+  version: 0.4.0-rc1
+  release_tag: release-0.4.0-rc1
+  release_url: "https://github.com/postfiatorg/postfiat-sdk/releases/tag/release-0.4.0-rc1"
+  release_date: "2025-01-27"
+
 plugins:
   - search
   - swagger-ui-tag

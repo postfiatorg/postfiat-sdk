@@ -32,6 +32,36 @@ node -e "const pkg = require('./package.json'); pkg.version = process.argv[1]; r
 echo "✅ Solidity versions updated"
 
 echo ""
+echo "📚 Updating documentation templates..."
+cd ..
+# Update mkdocs.yml extra section with new version
+RELEASE_TAG="release-$VERSION"
+RELEASE_URL="https://github.com/postfiatorg/postfiat-sdk/releases/tag/release-$VERSION"
+RELEASE_DATE=$(date +%Y-%m-%d)
+DOWNLOAD_URL="https://github.com/postfiatorg/postfiat-sdk/releases/download/release-$VERSION"
+REPO_URL="https://github.com/postfiatorg/postfiat-sdk"
+
+# Use sed to update the extra section in mkdocs.yml
+sed -i.bak \
+  -e "s/version: .*/version: $VERSION/" \
+  -e "s/release_tag: .*/release_tag: $RELEASE_TAG/" \
+  -e "s|release_url: .*|release_url: \"$RELEASE_URL\"|" \
+  -e "s/release_date: .*/release_date: \"$RELEASE_DATE\"/" \
+  mkdocs.yml
+rm mkdocs.yml.bak
+
+# Update all placeholders in docs/index.md
+sed -i.bak \
+  -e "s/__VERSION_PLACEHOLDER__/$VERSION/g" \
+  -e "s/__RELEASE_TAG_PLACEHOLDER__/$RELEASE_TAG/g" \
+  -e "s|__DOWNLOAD_URL_PLACEHOLDER__|$DOWNLOAD_URL|g" \
+  -e "s|__REPO_URL_PLACEHOLDER__|$REPO_URL|g" \
+  docs/index.md
+rm docs/index.md.bak
+
+echo "✅ Documentation versions updated"
+
+echo ""
 echo "🎉 All versions updated to $VERSION!"
 echo ""
 echo "📋 Summary:"
@@ -42,3 +72,4 @@ echo "  - TypeScript package.json: $VERSION"
 echo "  - TypeScript index.ts: $VERSION"
 echo "  - TypeScript User-Agent: $VERSION"
 echo "  - Solidity package.json: $VERSION"
+echo "  - Documentation mkdocs.yml: $RELEASE_TAG"
