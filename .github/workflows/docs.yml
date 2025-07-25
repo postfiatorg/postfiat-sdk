@@ -75,7 +75,7 @@ jobs:
 
   # This job now ONLY deploys the artifact created by the 'build' job
   deploy:
-    needs: build
+    needs: build-docsExpected
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
