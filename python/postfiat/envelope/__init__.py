@@ -3,7 +3,7 @@
 Envelope creation, validation, and management utilities.
 """
 
-__version__ = "0.4.0-rc1"
+__version__ = "0.4.0"
 
 from .factory import EnvelopeFactory
 
