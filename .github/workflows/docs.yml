@@ -1,3 +1,5 @@
+# .github/workflows/your-file.yml
+
 name: Documentation
 
 on:
@@ -19,97 +21,70 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-docs:
+  # This job now builds the docs AND uploads them as a Pages artifact
+  build:
     runs-on: ubuntu-latest
+    # Grant permissions to this job
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
+    
+      # ... (all your setup and 'make docs' steps remain here) ...
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup A2A dependency
         run: |
           chmod +x scripts/setup-a2a-dependency.sh
           ./scripts/setup-a2a-dependency.sh
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
           cache: false
-
       - name: Install protoc-gen-doc
         run: |
-          # Install protoc-gen-doc
           go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
-          
-          # Make it available in PATH
           sudo cp $(go env GOPATH)/bin/protoc-gen-doc /usr/local/bin/
-          
-          # Verify installation
           which protoc-gen-doc
           protoc-gen-doc --version || true
-
-      # Use Makefile for all documentation generation
-      - name: Makefile help (discoverability)
-        run: make help
-
       - name: Install all dependencies
         run: make deps
-
-      - name: Build all documentation (mkdocs, Sphinx, TypeDoc, Swagger, etc.)
+      - name: Build all documentation
         run: make docs
 
-      # Upload documentation artifacts
-      - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: site/
-
-  deploy:
-    needs: build-docs
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_to_pages == 'true')
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Download documentation artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation
-          path: site/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        with:
-          enablement: true
-
-      - name: Upload to GitHub Pages
+      # Replace 'upload-artifact' with 'upload-pages-artifact'
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: site/
 
+  # This job now ONLY deploys the artifact created by the 'build' job
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_to_pages == 'true')
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
