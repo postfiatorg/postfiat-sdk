@@ -41,12 +41,9 @@ RELEASE_DATE=$(date +%Y-%m-%d)
 DOWNLOAD_URL="https://github.com/postfiatorg/postfiat-sdk/releases/download/release-$VERSION"
 REPO_URL="https://github.com/postfiatorg/postfiat-sdk"
 
-# Use sed to update the extra section in mkdocs.yml
+# Use sed to update ONLY the extra section in mkdocs.yml (not plugin versions)
 sed -i.bak \
-  -e "s/version: .*/version: $VERSION/" \
-  -e "s/release_tag: .*/release_tag: $RELEASE_TAG/" \
-  -e "s|release_url: .*|release_url: \"$RELEASE_URL\"|" \
-  -e "s/release_date: .*/release_date: \"$RELEASE_DATE\"/" \
+  -e "/^extra:/,/^[a-z]/ { s/  version: .*/  version: $VERSION/; s/  release_tag: .*/  release_tag: $RELEASE_TAG/; s|  release_url: .*|  release_url: \"$RELEASE_URL\"|; s/  release_date: .*/  release_date: \"$RELEASE_DATE\"/; }" \
   mkdocs.yml
 rm mkdocs.yml.bak
 
