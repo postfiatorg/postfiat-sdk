@@ -49,16 +49,9 @@ make sol-build
 
 ## API Documentation
 
-- **[Python SDK API](generated/python/index.html)** - Complete Python API reference with mkdocstrings
-- **[TypeScript SDK API](generated/typescript/index.html)** - Complete TypeScript API reference with TypeDoc
-- **[Solidity Integration](solidity/README.md)** - Smart contract development guide
-- **[OpenAPI Specification](api/openapi.md)** - Interactive REST API documentation
-- **[Protocol Buffers](generated/proto/index.md)** - Proto message definitions
+- **[Python SDK API](python-api/)** - Complete Python API reference with mkdocstrings
+- **[OpenAPI Specification](api/openapi/)** - Interactive REST API documentation
 
 ## Architecture
 
-The SDK follows a [proto-first architecture](ARCHITECTURE.md) where Protocol Buffer definitions drive code generation for multiple languages and platforms, including smart contracts.
-
-## Development
-
-See the [Development Guide](DEVELOPMENT.md) for information on contributing to the SDK.
+This SDK follows a **proto-first architecture** where Protocol Buffer definitions serve as the single source of truth for all generated code across multiple languages and platforms.

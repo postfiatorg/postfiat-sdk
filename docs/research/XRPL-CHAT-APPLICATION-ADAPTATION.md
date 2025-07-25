@@ -121,13 +121,13 @@ graph TB
         end
 
         subgraph "XRPL Integration Layer"
-            XRPL_CLIENT[XRPL Client<br/>Memo Processing & Content Addressing]
+            XRPL_CLIENT["XRPL Client<br/>Memo Processing & Content Addressing"]
             CONTEXT_DAG[Context DAG Manager]
         end
     end
 
     subgraph "External Services"
-        XRPL_NET[XRPL Network<br/>Communication Bus & Storage]
+        XRPL_NET["XRPL Network<br/>Communication Bus & Storage"]
         OPENROUTER[OpenRouter API]
     end
 
@@ -150,7 +150,7 @@ graph TB
     CONTEXT_DAG --> XRPL_NET
 
     %% External service connections
-    CHAT_STEP --> OPENROUTER
+    CHAT_STEP --> OPENROUTER[OPENROUTER]
 
     style CLIENT fill:#e3f2fd
     style OBSERVER fill:#e8f5e8
@@ -162,7 +162,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant Client as PostFiat Client
-    participant XRPL as XRPL Ledger<br/>(Communication Bus)
+    participant XRPL as "XRPL Ledger<br/>(Communication Bus)"
     participant Observer as Transaction Observer
     participant Agent as PostFiat Chat Agent
     participant LLM as OpenRouter LLM

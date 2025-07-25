@@ -9,35 +9,35 @@ The PostFiat SDK is built on a **proto-first, API-driven architecture** that aut
 ```mermaid
 graph TB
     subgraph "Source of Truth"
-        A[Protocol Buffers<br/>&lpar;.proto files&rpar;]
+        A["Protocol Buffers<br/>(.proto files)"]
     end
     
     subgraph "Code Generation Layer"
-        B[Buf CLI<br/>Protobuf → Python/TypeScript]
-        C[Custom Generators<br/>Types & Services]
-        D[OpenAPI Generator<br/>REST API Specs]
-        E[Protobuf3-Solidity<br/>Protobuf → Solidity]
+        B["Buf CLI<br/>Protobuf → Python/TypeScript"]
+        C["Custom Generators<br/>Types & Services"]
+        D["OpenAPI Generator<br/>REST API Specs"]
+        E["Protobuf3-Solidity<br/>Protobuf → Solidity"]
     end
     
     subgraph "Core SDK Layer"
-        F[Pydantic Models<br/>Type Safety & Validation]
-        G[SQLModel<br/>Database ORM]
-        H[FastAPI<br/>REST API Server]
-        I[gRPC Services<br/>High Performance RPC]
-        J[Solidity Contracts<br/>Smart Contract Logic]
+        F["Pydantic Models<br/>Type Safety & Validation"]
+        G["SQLModel<br/>Database ORM"]
+        H["FastAPI<br/>REST API Server"]
+        I["gRPC Services<br/>High Performance RPC"]
+        J["Solidity Contracts<br/>Smart Contract Logic"]
     end
     
     subgraph "AI Integration Layer"
-        K[PydanticAI<br/>AI Agent Framework]
-        L[LLM Integrations<br/>OpenAI, Anthropic, etc.]
+        K["PydanticAI<br/>AI Agent Framework"]
+        L["LLM Integrations<br/>OpenAI, Anthropic, etc."]
     end
     
     subgraph "Client Layer"
-        M[Python SDK<br/>Type-safe Client]
-        N[REST API<br/>HTTP/JSON Interface]
-        O[gRPC Client<br/>Binary Protocol]
-        P[TypeScript SDK<br/>Web Client]
-        Q[Solidity Contracts<br/>EVM Integration]
+        M["Python SDK<br/>Type-safe Client"]
+        N["REST API<br/>HTTP/JSON Interface"]
+        O["gRPC Client<br/>Binary Protocol"]
+        P["TypeScript SDK<br/>Web Client"]
+        Q["Solidity Contracts<br/>EVM Integration"]
     end
     
     A --> B
@@ -659,7 +659,7 @@ graph TB
     end
 
     subgraph "API Gateway"
-        GATEWAY[API Gateway<br/>Rate Limiting<br/>Authentication]
+        GATEWAY["API Gateway<br/>Rate Limiting<br/>Authentication"]
     end
 
     subgraph "Application Tier"
@@ -699,8 +699,8 @@ graph TB
     subgraph "External Services"
         OPENAI[OpenAI API]
         ANTHROPIC[Anthropic API]
-        MONITORING[Monitoring<br/>Prometheus/Grafana]
-        LOGGING[Logging<br/>ELK Stack]
+        MONITORING["Monitoring<br/>Prometheus/Grafana"]
+        LOGGING["Logging<br/>ELK Stack"]
     end
 
     %% Client connections
@@ -745,8 +745,8 @@ graph TB
     API2 --> QUEUE
     API3 --> QUEUE
 
-    %% External service connections
-    AI_SVC --> OPENAI
+    %% External service connections  
+    AI_SVC --> OPENAI[OPENAI]
     AI_SVC --> ANTHROPIC
 
     %% Monitoring connections

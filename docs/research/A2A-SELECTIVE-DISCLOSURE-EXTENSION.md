@@ -44,16 +44,16 @@ graph TB
         Agent --> RegistryReg
         DirectReg --> XRPL[XRPL Ledger]
         RegistryReg --> Registry[Registry Service]
-        Registry --> XRPL
+        Registry --> XRPL[XRPL]
     end
 
     subgraph "Communication Paths"
-        A2APath[A2A gRPC Path<br/>Performance/Real-time]
-        LedgerPath[Ledger Transaction Path<br/>Auditability/Compliance]
+        A2APath["A2A gRPC Path<br/>Performance/Real-time"]
+        LedgerPath["Ledger Transaction Path<br/>Auditability/Compliance"]
 
         Agent --> A2APath
         Agent --> LedgerPath
-        LedgerPath --> XRPL
+        LedgerPath --> XRPL[XRPL]
     end
 
     subgraph "Client Discovery"
@@ -64,7 +64,7 @@ graph TB
         Client --> TrustRegistry
         Client --> VerifyDirect
         TrustRegistry --> Registry
-        VerifyDirect --> XRPL
+        VerifyDirect --> XRPL[XRPL]
     end
 
     style XRPL fill:#f9f,stroke:#333,stroke-width:4px
@@ -570,26 +570,26 @@ sequenceDiagram
 graph TB
     subgraph "A2A Context: ai_ethics_research_2024"
         subgraph "A2A Message 1: Alice's Query"
-            Q[PostFiat Envelope<br/>PROTECTED<br/>Key: alice_query_123<br/>XRPL: tx_abc123]
+            Q["PostFiat Envelope<br/>PROTECTED<br/>Key: alice_query_123<br/>XRPL: tx_abc123"]
         end
 
         subgraph "PostFiat Context DAG (within message content)"
             subgraph "Accessible Context Layer"
-                A[AI Ethics Research<br/>PROTECTED<br/>Key: research_456<br/>XRPL: tx_def456]
-                B[Regulatory Framework<br/>PROTECTED<br/>Key: shared_789<br/>XRPL: tx_ghi789]
-                C[Industry Standards<br/>NONE<br/>Public<br/>XRPL: tx_jkl012]
+                A["AI Ethics Research<br/>PROTECTED<br/>Key: research_456<br/>XRPL: tx_def456"]
+                B["Regulatory Framework<br/>PROTECTED<br/>Key: shared_789<br/>XRPL: tx_ghi789"]
+                C["Industry Standards<br/>NONE<br/>Public<br/>XRPL: tx_jkl012"]
             end
 
             subgraph "Deep Context Layer"
-                D[Alice's Private Notes<br/>PROTECTED<br/>Key: alice_private_abc<br/>XRPL: tx_mno345]
-                E[Bob's Analysis<br/>PROTECTED<br/>Key: bob_shared_def<br/>XRPL: tx_pqr678]
-                F[Carol's Legal Review<br/>PROTECTED<br/>Key: shared_789<br/>XRPL: tx_stu901]
-                I[Deep Reference<br/>PROTECTED<br/>Key: shared_789 ← known key!<br/>XRPL: tx_abc890]
+                D["Alice's Private Notes<br/>PROTECTED<br/>Key: alice_private_abc<br/>XRPL: tx_mno345"]
+                E["Bob's Analysis<br/>PROTECTED<br/>Key: bob_shared_def<br/>XRPL: tx_pqr678"]
+                F["Carol's Legal Review<br/>PROTECTED<br/>Key: shared_789<br/>XRPL: tx_stu901"]
+                I["Deep Reference<br/>PROTECTED<br/>Key: shared_789 ← known key!<br/>XRPL: tx_abc890"]
             end
 
             subgraph "Opaque Nodes (Envelope Accessible)"
-                G[Confidential Legal Doc<br/>PROTECTED<br/>Key: shared_ABC ← No access<br/>XRPL: tx_vwx234]
-                H[Company Internal<br/>PUBLIC_KEY<br/>Not for LLM<br/>XRPL: tx_yz567]
+                G["Confidential Legal Doc<br/>PROTECTED<br/>Key: shared_ABC ← No access<br/>XRPL: tx_vwx234"]
+                H["Company Internal<br/>PUBLIC_KEY<br/>Not for LLM<br/>XRPL: tx_yz567"]
             end
         end
     end

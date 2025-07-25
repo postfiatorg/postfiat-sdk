@@ -1,0 +1,15 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  # OpenAPI v2 generation with comprehensive options
+  - plugin: buf.build/grpc-ecosystem/openapiv2
+    out: ../api
+    opt:
+      - allow_merge=true
+      - merge_file_name=openapi_v2_generated
+      - use_go_templates=true
+      - json_names_for_fields=true
+      - include_package_in_tags=true
+      - allow_delete_body=true
+      - generate_unbound_methods=true 

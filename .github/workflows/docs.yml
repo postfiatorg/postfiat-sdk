@@ -7,6 +7,13 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deploy_to_pages:
+        description: 'Deploy to GitHub Pages (only works on main branch)'
+        required: false
+        default: 'true'
+        type: boolean
 
 # Allow one concurrent deployment
 concurrency:
@@ -48,6 +55,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: false
       - name: Install protoc-gen-doc
         run: |
           go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
@@ -70,7 +78,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    # Permissions are now in the build job, but it's safe to keep them here for clarity
     permissions:
       pages: write
       id-token: write

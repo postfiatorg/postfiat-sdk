@@ -136,8 +136,13 @@ def main():
     repo_root = Path(__file__).parent.parent
     os.chdir(repo_root)
     
-    # Generate all documentation
-    generate_protobuf_docs()
+    # Generate all documentation (continue on failures for individual steps)
+    try:
+        generate_protobuf_docs()
+    except Exception as e:
+        print(f"⚠️  Protobuf documentation generation failed: {e}")
+        print("📋 Continuing with other documentation steps...")
+    
     copy_api_specs()
     generate_sdk_docs()
     

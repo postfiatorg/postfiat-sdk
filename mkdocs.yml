@@ -1,8 +1,11 @@
 site_name: PostFiat SDK Documentation
+site_url: https://postfiat.org/postfiat-sdk/
 
 plugins:
   - search
   - swagger-ui-tag
+  - mermaid2:
+      version: 10.6.1
   - mkdocstrings:
       handlers:
         python:
@@ -21,7 +24,7 @@ nav:
   - Contributing: CONTRIBUTING.md
   - API Reference:
       - OpenAPI Specification: api/openapi.md
-      - Python SDK: generated/python/index.md
+      - Python SDK: python-api.md
       - Protocol Buffers: generated/proto/index.md
   - Research:
       - Key Management: research/KEY-MANAGEMENT.md
@@ -31,7 +34,11 @@ nav:
 markdown_extensions:
   - admonition
   - codehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
   - pymdownx.tabbed
   - pymdownx.details
   - toc:
