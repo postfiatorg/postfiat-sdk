@@ -18,7 +18,7 @@ on:
 # Allow one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # This job now builds the docs AND uploads them as a Pages artifact
