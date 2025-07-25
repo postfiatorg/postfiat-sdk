@@ -2,34 +2,32 @@
 
 Welcome to the PostFiat SDK documentation. This is a proto-first, multi-language SDK with Python, TypeScript, and Solidity support.
 
-## Latest Release: __RELEASE_TAG_PLACEHOLDER__
-
 ## Quick Start
 
 ### Python
 ```bash
 # Install from PyPI (when published)
-pip install postfiat-sdk==__VERSION_PLACEHOLDER__
+pip install postfiat-sdk=={{ config.extra.version }}
 
 # Or download from GitHub releases
-# wget __DOWNLOAD_URL_PLACEHOLDER__/postfiat-sdk-__VERSION_PLACEHOLDER__.whl
-# pip install postfiat-sdk-__VERSION_PLACEHOLDER__.whl
+# wget {{ config.extra.release_url | replace("/tag/", "/download/") }}/postfiat-sdk-{{ config.extra.version }}.whl
+# pip install postfiat-sdk-{{ config.extra.version }}.whl
 ```
 
 ### TypeScript
 ```bash
 # Install from npm (when published)
-npm install @postfiat/sdk@__VERSION_PLACEHOLDER__
+npm install @postfiat/sdk@{{ config.extra.version }}
 
 # Or download from GitHub releases
-# wget __DOWNLOAD_URL_PLACEHOLDER__/postfiat-sdk-__VERSION_PLACEHOLDER__.tgz
-# npm install postfiat-sdk-__VERSION_PLACEHOLDER__.tgz
+# wget {{ config.extra.release_url | replace("/tag/", "/download/") }}/postfiat-sdk-{{ config.extra.version }}.tgz
+# npm install postfiat-sdk-{{ config.extra.version }}.tgz
 ```
 
 ### Solidity
 ```bash
 # Clone the repository for Solidity development
-git clone __REPO_URL_PLACEHOLDER__.git
+git clone https://github.com/postfiatorg/postfiat-sdk.git
 cd postfiat-sdk
 
 # Install dependencies and generate contracts

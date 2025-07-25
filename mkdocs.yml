@@ -1,14 +1,18 @@
 site_name: PostFiat SDK Documentation
 site_url: https://postfiat.org/postfiat-sdk/
 
+theme:
+  name: material
+  custom_dir: overrides
+
 extra:
-  version: 0.4.0-rc1
-  release_tag: release-0.4.0-rc1
-  release_url: "https://github.com/postfiatorg/postfiat-sdk/releases/tag/release-0.4.0-rc1"
-  release_date: "2025-01-27"
+  version: 0.4.0
+  release_tag: v0.4.0
+  release_url: "https://github.com/postfiatorg/postfiat-sdk/releases/tag/v0.4.0"
 
 plugins:
   - search
+  - macros
   - swagger-ui-tag
   - mermaid2:
       version: 10.6.1

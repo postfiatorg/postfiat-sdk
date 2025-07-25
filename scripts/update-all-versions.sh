@@ -32,41 +32,26 @@ node -e "const pkg = require('./package.json'); pkg.version = process.argv[1]; r
 echo "✅ Solidity versions updated"
 
 echo ""
-echo "📚 Updating documentation templates..."
+echo "📚 Updating documentation banner..."
 cd ..
-# Update mkdocs.yml extra section with new version
-RELEASE_TAG="release-$VERSION"
-RELEASE_URL="https://github.com/postfiatorg/postfiat-sdk/releases/tag/release-$VERSION"
-RELEASE_DATE=$(date +%Y-%m-%d)
-DOWNLOAD_URL="https://github.com/postfiatorg/postfiat-sdk/releases/download/release-$VERSION"
-REPO_URL="https://github.com/postfiatorg/postfiat-sdk"
+# Update mkdocs.yml extra section for announcement banner
+RELEASE_TAG="v$VERSION"
+RELEASE_URL="https://github.com/postfiatorg/postfiat-sdk/releases/tag/v$VERSION"
 
-# Use sed to update ONLY the extra section in mkdocs.yml (not plugin versions)
+# Update only the banner-required fields in mkdocs.yml
 sed -i.bak \
-  -e "/^extra:/,/^[a-z]/ { s/  version: .*/  version: $VERSION/; s/  release_tag: .*/  release_tag: $RELEASE_TAG/; s|  release_url: .*|  release_url: \"$RELEASE_URL\"|; s/  release_date: .*/  release_date: \"$RELEASE_DATE\"/; }" \
+  -e "/^extra:/,/^[a-z]/ { s/  version: .*/  version: $VERSION/; s/  release_tag: .*/  release_tag: $RELEASE_TAG/; s|  release_url: .*|  release_url: \"$RELEASE_URL\"|; }" \
   mkdocs.yml
 rm mkdocs.yml.bak
 
-# Update all placeholders in docs/index.md
-sed -i.bak \
-  -e "s/__VERSION_PLACEHOLDER__/$VERSION/g" \
-  -e "s/__RELEASE_TAG_PLACEHOLDER__/$RELEASE_TAG/g" \
-  -e "s|__DOWNLOAD_URL_PLACEHOLDER__|$DOWNLOAD_URL|g" \
-  -e "s|__REPO_URL_PLACEHOLDER__|$REPO_URL|g" \
-  docs/index.md
-rm docs/index.md.bak
-
-echo "✅ Documentation versions updated"
+echo "✅ Documentation banner updated"
 
 echo ""
 echo "🎉 All versions updated to $VERSION!"
 echo ""
 echo "📋 Summary:"
 echo "  - Centralized VERSION file: $VERSION"
-echo "  - Python pyproject.toml: dynamic version from setup.py"
-echo "  - Python __init__.py: $VERSION"
-echo "  - TypeScript package.json: $VERSION"
-echo "  - TypeScript index.ts: $VERSION"
-echo "  - TypeScript User-Agent: $VERSION"
-echo "  - Solidity package.json: $VERSION"
-echo "  - Documentation mkdocs.yml: $RELEASE_TAG"
+echo "  - Python packages: $VERSION"
+echo "  - TypeScript packages: $VERSION"  
+echo "  - Solidity packages: $VERSION"
+echo "  - Documentation banner: $RELEASE_TAG"

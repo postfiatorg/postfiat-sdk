@@ -63,7 +63,7 @@ deps:
 	@echo "📦 Installing Python dependencies..."
 	pip install -e .
 	pip install -e "python/[dev]"
-	pip install build twine mkdocs mkdocs-material mkdocs-swagger-ui-tag mkdocstrings[python] mkdocs-mermaid2-plugin
+	pip install build twine mkdocs mkdocs-material mkdocs-swagger-ui-tag mkdocstrings[python] mkdocs-mermaid2-plugin mkdocs-macros-plugin
 	@echo "📦 Installing TypeScript dependencies..."
 	cd typescript && (test -d node_modules || npm ci || npm install)
 	@echo "🔧 Installing buf CLI tool..."
