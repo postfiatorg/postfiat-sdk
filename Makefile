@@ -189,7 +189,8 @@ build-ts:
 	cd typescript && npm run build && npm pack
 
 # Build all documentation (mkdocs, Sphinx, TypeDoc, Swagger, etc.)
-docs:
+# Build all documentation (mkdocs, Sphinx, TypeDoc, Swagger, etc.)
+docs: deps
 	@echo "📚 Building documentation..."
 	# Generate OpenAPI specification from protobuf
 	cd proto && ../bin/buf generate --template buf.gen.openapi-only.yaml
@@ -205,7 +206,6 @@ docs:
 	# MkDocs site (now includes Python API docs via mkdocstrings)
 	mkdocs build
 	@echo "✅ Documentation build complete!"
-
 # Solidity development
 sol-deps:
 	@echo "📦 Installing Solidity dependencies..."
