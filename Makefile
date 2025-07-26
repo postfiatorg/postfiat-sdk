@@ -63,7 +63,7 @@ deps:
 	@echo "📦 Installing Python dependencies..."
 	pip install -e .
 	pip install -e "python/[dev]"
-	pip install build twine mkdocs mkdocs-material mkdocs-swagger-ui-tag mkdocstrings[python] mkdocs-mermaid2-plugin
+	pip install build twine mkdocs mkdocs-material mkdocs-swagger-ui-tag mkdocstrings[python] mkdocs-mermaid2-plugin mkdocs-macros-plugin
 	@echo "📦 Installing TypeScript dependencies..."
 	cd typescript && (test -d node_modules || npm ci || npm install)
 	@echo "🔧 Installing buf CLI tool..."
@@ -200,6 +200,9 @@ docs: deps
 	cd typescript && npm run generate:all
 	# TypeScript API docs (TypeDoc)
 	cd typescript && npx typedoc --out ../docs/generated/typescript src/index.ts --plugin typedoc-plugin-markdown --theme markdown --skipErrorChecking
+	# Update documentation with current version info
+	@echo "🔢 Updating documentation versions..."
+	@./scripts/update-all-versions.sh > /dev/null 2>&1 || echo "⚠️  Version update had some warnings (proto generation issues - this is normal)"
 	# MkDocs site (now includes Python API docs via mkdocstrings)
 	mkdocs build
 	@echo "✅ Documentation build complete!"

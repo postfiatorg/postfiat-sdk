@@ -4,7 +4,7 @@ A proto-first, multi-language SDK with Python, TypeScript, and Solidity support 
 
 ## 📚 Documentation
 
-**[📖 Full Documentation](https://allenday.github.io/pfsdk)**
+**[📖 Full Documentation](https://postfiat.org/postfiat-sdk)**
 
 - [Architecture Overview](docs/ARCHITECTURE.md)
 - [Development Guide](docs/DEVELOPMENT.md)

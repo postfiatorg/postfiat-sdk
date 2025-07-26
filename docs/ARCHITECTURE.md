@@ -9,35 +9,35 @@ The PostFiat SDK is built on a **proto-first, API-driven architecture** that aut
 ```mermaid
 graph TB
     subgraph "Source of Truth"
-        A["Protocol Buffers<br/>(.proto files)"]
+        A["Protocol Buffers\n(.proto files)"]
     end
     
     subgraph "Code Generation Layer"
-        B["Buf CLI<br/>Protobuf → Python/TypeScript"]
-        C["Custom Generators<br/>Types & Services"]
-        D["OpenAPI Generator<br/>REST API Specs"]
-        E["Protobuf3-Solidity<br/>Protobuf → Solidity"]
+        B["Buf CLI\nProtobuf → Python/TypeScript"]
+        C["Custom Generators\nTypes & Services"]
+        D["OpenAPI Generator\nREST API Specs"]
+        E["Protobuf3-Solidity\nProtobuf → Solidity"]
     end
     
     subgraph "Core SDK Layer"
-        F["Pydantic Models<br/>Type Safety & Validation"]
-        G["SQLModel<br/>Database ORM"]
-        H["FastAPI<br/>REST API Server"]
-        I["gRPC Services<br/>High Performance RPC"]
-        J["Solidity Contracts<br/>Smart Contract Logic"]
+        F["Pydantic Models\nType Safety & Validation"]
+        G["SQLModel\nDatabase ORM"]
+        H["FastAPI\nREST API Server"]
+        I["gRPC Services\nHigh Performance RPC"]
+        J["Solidity Contracts\nSmart Contract Logic"]
     end
     
     subgraph "AI Integration Layer"
-        K["PydanticAI<br/>AI Agent Framework"]
-        L["LLM Integrations<br/>OpenAI, Anthropic, etc."]
+        K["PydanticAI\nAI Agent Framework"]
+        L["LLM Integrations\nOpenAI, Anthropic, etc."]
     end
     
     subgraph "Client Layer"
-        M["Python SDK<br/>Type-safe Client"]
-        N["REST API<br/>HTTP/JSON Interface"]
-        O["gRPC Client<br/>Binary Protocol"]
-        P["TypeScript SDK<br/>Web Client"]
-        Q["Solidity Contracts<br/>EVM Integration"]
+        M["Python SDK\nType-safe Client"]
+        N["REST API\nHTTP/JSON Interface"]
+        O["gRPC Client\nBinary Protocol"]
+        P["TypeScript SDK\nWeb Client"]
+        Q["Solidity Contracts\nEVM Integration"]
     end
     
     A --> B
@@ -269,6 +269,19 @@ class Wallet(SQLModel, table=True):
 ### Data Model Relationships
 ```mermaid
 classDiagram
+    class MessageType {
+        CONTEXTUAL_MESSAGE
+        MULTIPART_MESSAGE_PART
+        RESERVED_100
+    }
+
+    class EncryptionMode {
+        NONE
+        LEGACY_SHARED
+        NACL_SECRETBOX
+        NACL_BOX
+    }
+
     class User {
         +str id
         +str email
@@ -293,7 +306,7 @@ classDiagram
         +str id
         +str wallet_id
         +float amount
-        +str type
+        +str tx_type
         +str description
         +datetime timestamp
         +validate_amount()
@@ -303,7 +316,7 @@ classDiagram
         +str id
         +str name
         +str model_type
-        +dict config
+        +Dict config
         +datetime created_at
         +process_request()
         +get_response()
@@ -313,7 +326,7 @@ classDiagram
         +str id
         +str user_id
         +str agent_id
-        +list messages
+        +List messages
         +datetime started_at
         +add_message()
         +get_history()
@@ -325,38 +338,21 @@ classDiagram
         +str content
         +str role
         +datetime timestamp
-        +MessageType type
+        +MessageType msg_type
         +EncryptionMode encryption
     }
 
     %% Relationships
-    User --> Wallet : owns
-    Wallet --> Transaction : contains
-    User --> AIConversation : participates
-    AIAgent --> AIConversation : handles
-    AIConversation --> Message : contains
+    User "1" --> "*" Wallet : owns
+    Wallet "1" --> "*" Transaction : contains
+    User "1" --> "*" AIConversation : participates
+    AIAgent "1" --> "*" AIConversation : handles
+    AIConversation "1" --> "*" Message : contains
 
-    %% Enums
-    class MessageType {
-        <<enumeration>>
-        CONTEXTUAL_MESSAGE
-        MULTIPART_MESSAGE_PART
-        RESERVED_100
-    }
 
-    class EncryptionMode {
-        <<enumeration>>
-        NONE
-        LEGACY_SHARED
-        NACL_SECRETBOX
-        NACL_BOX
-    }
-
-    Message --> MessageType
-    Message --> EncryptionMode
 ```
 
-### Observability Stack (structlog + loguru)
+### Observability Stack \(structlog \+ loguru\)
 **Role:** Production-ready observability and structured logging
 
 **Why this dual stack:**
@@ -659,7 +655,7 @@ graph TB
     end
 
     subgraph "API Gateway"
-        GATEWAY["API Gateway<br/>Rate Limiting<br/>Authentication"]
+        GATEWAY["API Gateway\nRate Limiting\nAuthentication"]
     end
 
     subgraph "Application Tier"
@@ -679,16 +675,16 @@ graph TB
 
     subgraph "Data Tier"
         subgraph "Primary Database"
-            PG_PRIMARY[(PostgreSQL Primary)]
+            PG_PRIMARY[PostgreSQL Primary]
         end
 
         subgraph "Read Replicas"
-            PG_REPLICA1[(PostgreSQL Replica 1)]
-            PG_REPLICA2[(PostgreSQL Replica 2)]
+            PG_REPLICA1[PostgreSQL Replica 1]
+            PG_REPLICA2[PostgreSQL Replica 2]
         end
 
         subgraph "Cache Layer"
-            REDIS[(Redis Cluster)]
+            REDIS[Redis Cluster]
         end
 
         subgraph "Message Queue"
@@ -699,8 +695,8 @@ graph TB
     subgraph "External Services"
         OPENAI[OpenAI API]
         ANTHROPIC[Anthropic API]
-        MONITORING["Monitoring<br/>Prometheus/Grafana"]
-        LOGGING["Logging<br/>ELK Stack"]
+        MONITORING["Monitoring\nPrometheus/Grafana"]
+        LOGGING["Logging\nELK Stack"]
     end
 
     %% Client connections
@@ -746,7 +742,7 @@ graph TB
     API3 --> QUEUE
 
     %% External service connections  
-    AI_SVC --> OPENAI[OPENAI]
+    AI_SVC --> OPENAI
     AI_SVC --> ANTHROPIC
 
     %% Monitoring connections
