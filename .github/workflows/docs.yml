@@ -18,11 +18,11 @@ on:
 # Allow one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # This job now builds the docs AND uploads them as a Pages artifact
-  build:
+  build-docsExpected:
     runs-on: ubuntu-latest
     # Grant permissions to this job
     permissions:
@@ -75,7 +75,7 @@ jobs:
 
   # This job now ONLY deploys the artifact created by the 'build' job
   deploy:
-    needs: build
+    needs: build-docsExpected
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
