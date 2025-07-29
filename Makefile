@@ -127,7 +127,7 @@ tests:
 	@echo "🧪 Running all TypeScript unit and integration tests..."
 	cd typescript && (test -d node_modules || timeout 300 npm install) && npm run test:all
 	@echo "🧪 Running Solidity tests..."
-	cd solidity && export PATH="$$HOME/.foundry/bin:$$PATH" && forge test
+	cd solidity && (forge test || $$HOME/.foundry/bin/forge test)
 	@echo "✅ All Python, TypeScript, and Solidity tests completed!"
 
 test: tests
@@ -214,7 +214,7 @@ docs: deps
 	# Generate OpenAPI specification from protobuf
 	cd proto && ../bin/buf generate --template buf.gen.openapi-only.yaml
 	# Generate protobuf documentation and copy API specs
-	python scripts/generate_docs.py
+	python3 scripts/generate_docs.py
 	# TypeScript codegen (ensure src/index.ts exists)
 	cd typescript && npm run generate:all
 	# TypeScript API docs (TypeDoc)
