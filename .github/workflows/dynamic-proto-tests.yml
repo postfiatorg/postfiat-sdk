@@ -43,8 +43,7 @@ jobs:
       - name: Setup Foundry
         run: |
           curl -L https://foundry.paradigm.xyz | bash
-          source /home/runner/.bashrc
-          foundryup -i nightly
+          ~/.foundry/bin/foundryup -i nightly
           echo "$HOME/.foundry/bin" >> $GITHUB_PATH
 
       - name: Setup Buf
