@@ -26,7 +26,7 @@ npm install @postfiat/sdk
 ### Solidity
 ```bash
 # Clone the repository for Solidity development
-git clone https://github.com/postfiat/pfsdk.git
+git clone https://github.com/postfiatorg/postfiat-sdk
 cd pfsdk
 
 # Install dependencies and generate contracts
