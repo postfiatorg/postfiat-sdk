@@ -272,6 +272,10 @@ third_party/googleapis/
 # Local buf CLI binary (downloaded by Makefile)
 bin/
 
+# Solidity generated files
+solidity/src/generated/
+solidity/out/
+
 # OS and IDE files
 .DS_Store
 .DS_Store?

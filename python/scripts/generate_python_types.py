@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Generate Python enums and exceptions from protobuf definitions."""
 
 import os

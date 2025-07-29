@@ -23,6 +23,81 @@ if (!fs.existsSync(generatedPath)) {
 }
 
 /**
+ * Extract enum definitions from generated protobuf TypeScript files
+ */
+function extractEnumsFromGeneratedFiles(): Array<{name: string, values: Array<{name: string, value: number}>}> {
+  const enums: Array<{name: string, values: Array<{name: string, value: number}>}> = [];
+  
+  // Recursively find all _pb.ts files in the generated directory
+  function findProtoFiles(dir: string): string[] {
+    const files: string[] = [];
+    const entries = fs.readdirSync(dir);
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        files.push(...findProtoFiles(fullPath));
+      } else if (entry.endsWith('_pb.ts')) {
+        files.push(fullPath);
+      }
+    }
+    
+    return files;
+  }
+  
+  const protoFiles = findProtoFiles(generatedPath);
+  
+  for (const filePath of protoFiles) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      
+      // Regex to match enum definitions: export enum EnumName { ... }
+      const enumPattern = /export enum (\w+) \{([\s\S]*?)\}/g;
+      let enumMatch;
+      
+      while ((enumMatch = enumPattern.exec(content)) !== null) {
+        const enumName = enumMatch[1];
+        const enumBody = enumMatch[2];
+        
+        // Extract enum values: VALUE_NAME = number, (more precise)
+        // This regex only matches direct assignments in the enum body
+        const valuePattern = /^\s*(\w+) = (\d+),?\s*$/gm;
+        const values: Array<{name: string, value: number}> = [];
+        let valueMatch;
+        
+        while ((valueMatch = valuePattern.exec(enumBody)) !== null) {
+          const valueName = valueMatch[1];
+          const valueNumber = parseInt(valueMatch[2], 10);
+          values.push({ name: valueName, value: valueNumber });
+        }
+        
+        if (values.length > 0) {
+          // Check if we already have this enum, and merge values if so
+          const existingEnum = enums.find(e => e.name === enumName);
+          if (existingEnum) {
+            // Merge values, avoiding duplicates
+            for (const newValue of values) {
+              const existingValue = existingEnum.values.find(v => v.name === newValue.name);
+              if (!existingValue) {
+                existingEnum.values.push(newValue);
+              }
+            }
+          } else {
+            enums.push({ name: enumName, values });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to parse ${filePath}: ${error}`);
+    }
+  }
+  
+  return enums;
+}
+
+/**
  * Generate TypeScript enums from protobuf definitions
  */
 function generateEnumsFromProto(): boolean {
@@ -55,43 +130,15 @@ function generateEnumsFromProto(): boolean {
 
 `;
 
-  // We'll need to analyze the generated files to extract enum information
-  // For now, let's create a basic structure that can be extended
-  const knownEnums = [
-    {
-      name: 'MessageType',
-      values: [
-        { name: 'CONTEXTUAL_MESSAGE', value: 0 },
-        { name: 'MULTIPART_MESSAGE_PART', value: 1 },
-        { name: 'RESERVED_100', value: 100 }
-      ]
-    },
-    {
-      name: 'EncryptionMode',
-      values: [
-        { name: 'NONE', value: 0 },
-        { name: 'LEGACY_SHARED', value: 1 },
-        { name: 'NACL_SECRETBOX', value: 2 },
-        { name: 'NACL_BOX', value: 3 }
-      ]
-    },
-    {
-      name: 'ErrorCode',
-      values: [
-        { name: 'OK', value: 0 },
-        { name: 'UNKNOWN', value: 1 },
-        { name: 'VALIDATION_FAILED', value: 2 },
-        { name: 'AUTHENTICATION_FAILED', value: 3 },
-        { name: 'AUTHORIZATION_FAILED', value: 4 },
-        { name: 'RESOURCE_NOT_FOUND', value: 5 },
-        { name: 'INTERNAL_SERVER_ERROR', value: 6 },
-        { name: 'SERVICE_UNAVAILABLE', value: 7 },
-        { name: 'RATE_LIMIT_EXCEEDED', value: 8 },
-        { name: 'TIMEOUT', value: 9 },
-        { name: 'CONNECTION_FAILED', value: 10 }
-      ]
-    }
-  ];
+  // Dynamically extract enum definitions from generated protobuf files
+  const knownEnums = extractEnumsFromGeneratedFiles();
+
+  if (knownEnums.length === 0) {
+    console.error('❌ No enums found in generated protobuf files');
+    return false;
+  }
+
+  console.log(`📝 Found ${knownEnums.length} enums: ${knownEnums.map(e => e.name).join(', ')}`);
 
   // Generate enum types
   for (const enumDef of knownEnums) {

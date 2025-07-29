@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Script to fix generated Solidity code by removing incomplete codec libraries.
 """

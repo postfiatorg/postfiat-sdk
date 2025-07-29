@@ -1,11 +1,5 @@
-# API Reference
+# OpenAPI Specification
 
-The PostFiat SDK provides both gRPC and REST APIs generated from Protocol Buffer definitions.
+This page provides an interactive view of the PostFiat SDK's REST API specification.
 
-## OpenAPI Specification
-
-<swagger-ui src="/pfsdk/generated/api/openapi_v2_generated.swagger.json"/>
-
-## Protocol Buffer Definitions
-
-See the [Protocol Buffer documentation](../generated/proto/index.md) for detailed type definitions.
+<swagger-ui src="/postfiat-sdk/generated/api/openapi_v2_generated.swagger.json"/>
