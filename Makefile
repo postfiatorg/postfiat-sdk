@@ -127,7 +127,34 @@ tests:
 	@echo "🧪 Running all TypeScript unit and integration tests..."
 	cd typescript && (test -d node_modules || timeout 300 npm install) && npm run test:all
 	@echo "🧪 Running Solidity tests..."
-	cd solidity && (forge test || $$HOME/.foundry/bin/forge test)
+	@if command -v forge >/dev/null 2>&1; then \
+		cd solidity && forge test; \
+	elif [ -f "$$HOME/.foundry/bin/forge" ]; then \
+		cd solidity && $$HOME/.foundry/bin/forge test; \
+	elif [ -f "/home/runner/.foundry/bin/forge" ]; then \
+		cd solidity && /home/runner/.foundry/bin/forge test; \
+	elif [ -f "/home/runner/.cargo/bin/forge" ]; then \
+		cd solidity && /home/runner/.cargo/bin/forge test; \
+	elif [ -f "$$HOME/.cargo/bin/forge" ]; then \
+		cd solidity && $$HOME/.cargo/bin/forge test; \
+	else \
+		echo "❌ Foundry (forge) not found in any expected location:"; \
+		echo "   - Not in PATH"; \
+		echo "   - Not in $$HOME/.foundry/bin/"; \
+		echo "   - Not in /home/runner/.foundry/bin/"; \
+		echo "   - Not in $$HOME/.cargo/bin/"; \
+		echo "   - Not in /home/runner/.cargo/bin/"; \
+		echo ""; \
+		echo "🔍 Available binaries in common locations:"; \
+		ls -la $$HOME/.foundry/bin/ 2>/dev/null || echo "   ~/.foundry/bin/ does not exist"; \
+		ls -la /home/runner/.foundry/bin/ 2>/dev/null || echo "   /home/runner/.foundry/bin/ does not exist"; \
+		ls -la $$HOME/.cargo/bin/ 2>/dev/null || echo "   ~/.cargo/bin/ does not exist"; \
+		echo ""; \
+		echo "⚠️  Foundry installation failed or installed to unexpected location"; \
+		echo "   In CI, ensure 'foundry-rs/foundry-toolchain' action is working properly"; \
+		echo "   Manual install: curl -L https://foundry.paradigm.xyz | bash && foundryup"; \
+		exit 1; \
+	fi
 	@echo "✅ All Python, TypeScript, and Solidity tests completed!"
 
 test: tests
