@@ -1,6 +1,7 @@
 name: Dynamic Proto Tests
 
 on:
+  workflow_dispatch:  # Manual trigger for testing
   push:
     branches: [ main, dev ]
     paths:
@@ -38,6 +39,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: typescript/package-lock.json
+
+      - name: Setup Foundry
+        run: |
+          curl -L https://foundry.paradigm.xyz | bash
+          export PATH="$HOME/.foundry/bin:$PATH"
+          foundryup -i nightly
+          echo "$HOME/.foundry/bin" >> $GITHUB_PATH
 
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1
