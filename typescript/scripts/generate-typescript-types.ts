@@ -448,7 +448,7 @@ export function createExceptionFromErrorCode(
   message: string,
   options?: Omit<ConstructorParameters<typeof PostFiatError>[1], 'errorCode'>
 ): PostFiatError {
-  const exceptionMap: Record<ErrorCode, new (message: string, options?: any) => PostFiatError> = {
+  const exceptionMap: Partial<Record<ErrorCode, new (message: string, options?: any) => PostFiatError>> = {
     [ErrorCode.AUTHENTICATION_FAILED]: AuthenticationError,
     [ErrorCode.AUTHORIZATION_FAILED]: AuthorizationError,
     [ErrorCode.VALIDATION_FAILED]: ValidationFailedError,
@@ -458,8 +458,8 @@ export function createExceptionFromErrorCode(
     [ErrorCode.RATE_LIMIT_EXCEEDED]: RateLimitError,
     [ErrorCode.TIMEOUT]: TimeoutError,
     [ErrorCode.CONNECTION_FAILED]: ConnectionError,
-    [ErrorCode.OK]: PostFiatError,
-    [ErrorCode.UNKNOWN]: PostFiatError,
+    [ErrorCode.SUCCESS]: PostFiatError,
+    [ErrorCode.UNKNOWN_ERROR]: PostFiatError,
   };
 
   const ExceptionClass = exceptionMap[errorCode] || PostFiatError;
@@ -478,7 +478,7 @@ export function createExceptionFromErrorInfo(errorInfo: {
   severity?: string;
 }): PostFiatError {
   return createExceptionFromErrorCode(
-    errorInfo.code || ErrorCode.UNKNOWN,
+    errorInfo.code || ErrorCode.UNKNOWN_ERROR,
     errorInfo.message || 'Unknown error',
     {
       severity: errorInfo.severity,
@@ -823,14 +823,16 @@ function generateGeneratedIndex(): boolean {
 export {
   MessageType as ProtoMessageType,
   EncryptionMode as ProtoEncryptionMode,
-  KeyType,
+  KeyType as ProtoKeyType,
 } from './postfiat/v3/messages_pb';
 export {
   ErrorCode as ProtoErrorCode,
   ErrorSeverity as ProtoErrorSeverity,
   ErrorCategory as ProtoErrorCategory,
 } from './postfiat/v3/errors_pb';
-export * from './a2a/v1/a2a_pb';
+
+// Export A2A types with namespace to avoid conflicts
+export * as A2A from './a2a/v1/a2a_pb';
 export * from './a2a/v1/a2a_connect';
 
 // Runtime class exports for PostFiat types
