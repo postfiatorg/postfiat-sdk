@@ -4,3 +4,4 @@ plugins:
   - local: protoc-gen-doc
     out: ../docs/generated/proto
     opt: markdown,index.md
+    strategy: all
