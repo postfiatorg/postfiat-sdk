@@ -7,24 +7,37 @@ Thank you for your interest in contributing to the PostFiat SDK! This document o
 This is a **proto-first SDK** with automated code generation:
 
 ```
-pfsdk/
-├── proto/                          # Protocol buffer definitions
-│   ├── postfiat/v3/               # Proto files (source of truth)
-│   ├── buf.yaml                   # Buf configuration
-│   └── buf.gen.yaml               # Code generation config
-├── postfiat/                      # Generated Python SDK
-│   ├── v3/                        # Generated protobuf classes (ignored)
-│   ├── types/enums.py             # Generated enums (ignored)
-│   ├── exceptions.py              # Generated exceptions (ignored)
-│   ├── models/                    # Generated models (ignored)
-│   ├── managers/                  # Generated managers (ignored)
-│   ├── services/                  # Generated services (ignored)
-│   └── clients/                   # Generated clients (ignored)
-├── scripts/                       # Build and generation scripts
-├── tests/
-│   ├── manual/                    # Manual tests (committed)
-│   └── generated/                 # Auto-generated tests (ignored)
-└── .github/workflows/             # CI/CD automation
+postfiat-sdk/
+├── .github/workflows/             # CI/CD automation
+├── docs/                          # Documentation
+├── overrides/                     # MkDocs overrides
+├── proto/                         # Protocol buffer definitions
+│   ├── postfiat/v3/              # Proto files (source of truth)
+│   ├── buf.yaml                  # Buf configuration
+│   └── buf.gen.yaml              # Code generation config
+├── python/                        # Python SDK
+│   ├── postfiat/                 # Python package
+│   │   ├── v3/                   # Generated protobuf classes (ignored)
+│   │   ├── types/                # Generated types (ignored)
+│   │   ├── models/               # Generated models (ignored)
+│   │   ├── services/             # Generated services (ignored)
+│   │   └── client/               # Generated clients (ignored)
+│   ├── scripts/                  # Python generation scripts
+│   └── tests/                    # Python tests
+│       ├── manual/               # Manual tests (committed)
+│       └── generated/            # Auto-generated tests (ignored)
+├── typescript/                    # TypeScript SDK
+│   ├── src/                      # TypeScript source
+│   ├── scripts/                  # TypeScript generation scripts
+│   └── tests/                    # TypeScript tests
+├── solidity/                      # Solidity contracts
+│   ├── src/                      # Solidity source
+│   └── test/                     # Solidity tests
+├── scripts/                       # Root-level scripts
+├── third_party/                   # Third-party dependencies
+├── Makefile                       # Build orchestration
+├── mkdocs.yml                     # Documentation config
+└── VERSION                        # Version file
 ```
 
 ## 🔄 Development Workflow
@@ -60,7 +73,7 @@ We use **git tags with artifacts** for releases:
 - Focus on source code changes
 
 **Releases:**
-- Create tags with "release-" prefix (e.g., `release-0.1.0-rc1`)
+- Create tags with "release-" prefix (e.g., `release-{{VERSION}}-rc1`)
 - CI automatically builds Python (.whl/.tar.gz) and TypeScript (.tgz) packages
 - Artifacts attached to GitHub releases for download
 - No automatic publishing to npm/PyPI registries
@@ -70,42 +83,48 @@ We use **git tags with artifacts** for releases:
 ### Prerequisites
 
 - Python 3.10+ 
-- Node.js 18+ (for TypeScript SDK)
+- Node.js 20+ (for TypeScript SDK)
 - [Buf CLI](https://buf.build/docs/installation)
 - Git
+- [Foundry](https://getfoundry.sh/) (for Solidity development)
 
 ### Setup
 
 1. **Clone and setup:**
    ```bash
-   git clone https://github.com/allenday/pfsdk.git
-   cd pfsdk
+   git clone --recurse-submodules https://github.com/postfiatorg/postfiat-sdk.git
+   cd postfiat-sdk
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    pip install -e .
    ```
 
-2. **Generate code locally:**
+   **Note:** The `--recurse-submodules` flag is important as this repository uses git submodules for third-party dependencies.
+
+2. **Setup development environment:**
    ```bash
-   # Generate protobuf classes
-   cd proto && buf generate --template buf.gen.yaml && cd ..
+   # Install all dependencies and generate initial code
+   make dev-setup
+   ```
+
+   **Or manually step by step:**
+   ```bash
+   # Install all dependencies
+   make deps
    
-   # Generate Python types
-   python scripts/generate_python_types.py
-   
-   # Generate TypeScript SDK
-   cd typescript && npm ci && npm run generate:types && cd ..
-   
-   # Generate comprehensive build (optional)
-   python scripts/generate_protobuf.py
-   
-   # Generate tests
-   python scripts/generate_dynamic_protobuf_tests.py
+   # Generate all code
+   make regen-all
    ```
 
 3. **Run tests:**
    ```bash
-   pytest tests/ -v
+   # Run all tests (Python + TypeScript + Solidity)
+   make tests
+   
+   # Or run individual test suites
+   make tests-manual    # Manual Python tests only
+   make ts-test         # TypeScript tests only
+   make sol-test        # Solidity tests only
    ```
 
 ## 📝 Making Contributions
@@ -126,21 +145,24 @@ git checkout -b feature/your-feature-name
 - Do NOT commit generated files
 
 **For Manual Code:**
-- Edit source files in appropriate directories
-- Add manual tests in `tests/manual/`
-- Follow existing code patterns
+- **Python:** Edit source files in `python/postfiat/`
+- **TypeScript:** Edit source files in `typescript/src/`
+- **Solidity:** Edit source files in `solidity/src/`
+- Add manual tests in respective test directories
+- Follow existing code patterns and language conventions
 
 ### 3. Test Your Changes
 
 ```bash
-# Generate and test locally
-python scripts/generate_python_types.py
-python scripts/generate_dynamic_protobuf_tests.py
-pytest tests/ -v
+# Regenerate all code with your changes
+make regen-all
+
+# Run all tests
+make tests
 
 # Verify package installation
 pip install -e .
-python -c "import postfiat; print('✅ Package imports successfully')"
+python -c "from postfiat.v3 import messages_pb2; print('✅ Package imports successfully')"
 ```
 
 ### 4. Create Pull Request
@@ -179,14 +201,20 @@ The CI will automatically:
 
 ### Test Execution
 ```bash
-# Run all tests
-pytest tests/ -v
+# Run all tests (Python + TypeScript + Solidity)
+make tests
 
-# Run only manual tests
-pytest tests/manual/ -v
+# Run only manual Python tests
+make tests-manual
 
-# Run only generated tests
-pytest tests/generated/ -v
+# Run only generated Python tests
+cd python && python -m pytest tests/generated/ -v
+
+# Run TypeScript tests
+make ts-test
+
+# Run Solidity tests
+make sol-test
 ```
 
 ## 🔧 Code Generation
@@ -229,29 +257,35 @@ make dev-setup  # Installs all dependencies and generates code
 
 ### Code Generation
 ```bash
-make proto      # Generate protobuf classes
-make types      # Generate Python types
-make tests      # Generate dynamic proto tests (Python)
-make regen-all  # Regenerate everything (proto + types + tests)
+make proto          # Generate protobuf classes
+make types          # Generate Python types
+make tests-dynamic  # Generate dynamic proto tests (Python)
+make regen-all      # Regenerate everything (proto + types + tests-dynamic)
 ```
 
 ### Testing
 ```bash
+make tests-dynamic  # Generate dynamic proto tests (Python)
 make tests-manual   # Run manual Python tests
 make tests-core     # Run core dynamic Python tests
-make tests-all      # Run all generated Python tests
+make tests-all      # Run all generated and manual Python tests
 make ts-build       # Build TypeScript SDK
 make ts-test        # Run TypeScript tests
 make ts-test-all    # Run all TypeScript unit and integration tests
-make test           # Run all Python and TypeScript tests (recommended)
+make sol-test       # Run Solidity tests
+make tests          # Run all tests (Python + TypeScript + Solidity) - RECOMMENDED
+make test           # Alias for 'tests'
 ```
 
-- The `test` target runs both Python and TypeScript tests for full coverage.
-- All TypeScript build/test commands are now available via Makefile.
+- The `tests` target runs Python, TypeScript, and Solidity tests for full coverage.
+- `test` is simply an alias for `tests`.
+- All TypeScript and Solidity build/test commands are available via Makefile.
 
 ## 🧪 Running All Tests
 
-- To run all tests (Python + TypeScript):
+To run all tests (Python + TypeScript + Solidity):
 ```bash
-make test
+make tests
 ```
+
+See `make help` for a full list of available targets.

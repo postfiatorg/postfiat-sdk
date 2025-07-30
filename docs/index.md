@@ -47,8 +47,8 @@ make sol-build
 
 ## API Documentation
 
-- **[Python SDK API](python-api/)** - Complete Python API reference with mkdocstrings
-- **[OpenAPI Specification](api/openapi/)** - Interactive REST API documentation
+- **[Python SDK API](python-api.md)** - Complete Python API reference with mkdocstrings
+- **[OpenAPI Specification](api/openapi.md)** - Interactive REST API documentation
 
 ## Architecture
 

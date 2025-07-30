@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Enhanced Protobuf build script for PostFiat Wallet v2.
 Generates Python code, Pydantic models, and OpenAPI schemas from .proto files.

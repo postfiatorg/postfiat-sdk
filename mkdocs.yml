@@ -4,6 +4,8 @@ site_url: https://postfiat.org/postfiat-sdk/
 theme:
   name: material
   custom_dir: overrides
+  features:
+    - toc.follow
 
 extra:
   version: 0.4.0
@@ -30,11 +32,13 @@ plugins:
 nav:
   - Home: index.md
   - Architecture: ARCHITECTURE.md
+  - API Services: SERVICES.md
   - Development: DEVELOPMENT.md
   - Contributing: CONTRIBUTING.md
   - API Reference:
       - OpenAPI Specification: api/openapi.md
       - Python SDK: python-api.md
+      - TypeScript SDK: generated/typescript/index.md
       - Protocol Buffers: generated/proto/index.md
   - Research:
       - Key Management: research/KEY-MANAGEMENT.md
@@ -53,3 +57,5 @@ markdown_extensions:
   - pymdownx.details
   - toc:
       permalink: true
+      toc_depth: 6
+      baselevel: 1

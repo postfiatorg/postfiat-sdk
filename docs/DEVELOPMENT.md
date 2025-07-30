@@ -11,7 +11,7 @@ The PostFiat SDK follows a **proto-first architecture** where Protocol Buffer de
 The SDK now supports multiple programming languages with a shared proto definition:
 
 ```
-pfsdk/
+postfiat-sdk/
 ├── proto/                    # Shared protocol buffer definitions
 │   ├── buf.gen.yaml         # Multi-language generation config
 │   └── postfiat/v3/         # Proto schema definitions
@@ -66,18 +66,33 @@ graph TD
 
 **Tool:** [Buf CLI](https://buf.build/)
 **Config:** `proto/buf.gen.yaml`
-**Command:** `buf generate --template buf.gen.yaml`
+
+**Command:** `make proto` (recommended) or direct command
+
+<!-- AUTO-GENERATED SECTION: protocol-buffer-generation -->
 
 **Generates:**
-- `python/postfiat/v3/*_pb2.py` - Python message classes
-- `python/postfiat/v3/*_pb2_grpc.py` - Python gRPC service stubs
-- `typescript/src/generated/*_pb.ts` - TypeScript message classes
-- `typescript/src/generated/*_connect.ts` - TypeScript gRPC-Web service stubs
+- `python/postfiat/v3/messages_pb2.py` - Python message classes
+- `python/postfiat/v3/errors_pb2.py` - Python error classes
+- `python/postfiat/v3/errors_pb2_grpc.py` - Python gRPC error stubs
+- `python/postfiat/v3/messages_pb2_grpc.py` - Python gRPC service stubs
+- `typescript/src/generated/postfiat/v3/errors_pb.ts` - TypeScript error classes
+- `typescript/src/generated/postfiat/v3/messages_pb.ts` - TypeScript message classes
+- `typescript/src/generated/a2a/v1/a2a_pb.ts` - Generated file
+- `typescript/src/generated/postfiat/v3/messages_connect.ts` - TypeScript gRPC-Web service stubs
+- `typescript/src/generated/a2a/v1/a2a_connect.ts` - Generated file
+- `solidity/src/generated/postfiat/v3/` - Solidity contracts and libraries
+- `api/openapi_v2_generated.swagger.json` - OpenAPI specification
+
+<!-- END AUTO-GENERATED SECTION -->
 
 **Example:**
 ```bash
-cd proto
-buf generate --template buf.gen.yaml
+# Recommended: Use Makefile (handles dependencies and post-processing)
+make proto
+
+# Direct command (requires manual dependency setup)
+cd proto && ../bin/buf generate --template buf.gen.yaml
 ```
 
 ### 2. Python Type Generation
@@ -85,12 +100,12 @@ buf generate --template buf.gen.yaml
 **Script:** `python/scripts/generate_python_types.py`
 **Purpose:** Generate Pydantic-compatible types from protobuf enums
 
-**Generates:**
-- `python/postfiat/types/enums.py` - Pydantic enum classes
+**Intended Generates:**
+- `python/postfiat/types/enums.py` - Pydantic enum classes  
 - `python/postfiat/exceptions.py` - SDK exception hierarchy
 
 **Features:**
-- Automatic enum extraction from protobuf
+- Automatic enum extraction from protobuf (when imports work)
 - Pydantic compatibility with conversion methods
 - Standard exception hierarchy for SDK errors
 
@@ -98,11 +113,24 @@ buf generate --template buf.gen.yaml
 ```python
 # Generated enum usage
 from postfiat.types.enums import MessageType, EncryptionMode
+```
 
-msg_type = MessageType.CONTEXTUAL_MESSAGE
-encryption = EncryptionMode.NACL_SECRETBOX
+<!-- AUTO-GENERATED SECTION: development-python-example -->
+```python
+# Available values: MessageType.CORE_MESSAGE, MessageType.MULTIPART_MESSAGE_PART
 
-# Convert to/from protobuf
+# Available values: EncryptionMode.NONE, EncryptionMode.PROTECTED, EncryptionMode.PUBLIC_KEY
+```
+<!-- END AUTO-GENERATED SECTION -->
+
+**Example usage:**
+```python
+msg_type = MessageType.CORE_MESSAGE
+encryption = EncryptionMode.PROTECTED
+```
+
+**Convert to/from protobuf:**
+```python
 pb_value = msg_type.to_protobuf()
 pydantic_value = MessageType.from_protobuf(pb_value)
 ```
@@ -112,10 +140,15 @@ pydantic_value = MessageType.from_protobuf(pb_value)
 **Tool:** [Protobuf3-Solidity](https://github.com/allenday/protobuf3-solidity)
 **Purpose:** Generate Solidity contracts and libraries from protobuf definitions
 
+**Dependencies:**
+- `@lazyledger/protobuf3-solidity-lib` ^0.6.0
+- `@openzeppelin/contracts` ^5.0.0
+- `Foundry` - Build toolkit (see foundry.toml)
+
 **Generates:**
-- `solidity/src/generated/postfiat/v3/` - PostFiat protobuf contracts
-- `solidity/src/generated/a2a/v1/` - A2A protobuf contracts  
+- `solidity/src/generated/a2a/v1/` - A2A protobuf contracts
 - `solidity/src/generated/google/protobuf/` - Google protobuf types
+- `solidity/src/generated/postfiat/v3/` - PostFiat protobuf contracts
 
 **Features:**
 - Automatic struct and enum generation from protobuf
@@ -126,30 +159,40 @@ pydantic_value = MessageType.from_protobuf(pb_value)
 
 **Example:**
 ```solidity
-// Auto-generated from protobuf definitions
+// Generated struct example (manually curated for docs)
 library Postfiat_V3 {
-    struct ContextualMessage {
-        string content;
+    struct Envelope {
+        uint32 version;
+        bytes content_hash;
         MessageType message_type;
         EncryptionMode encryption;
-    }
-    
-    enum MessageType {
-        CONTEXTUAL_MESSAGE,
-        MULTIPART_MESSAGE_PART
-    }
-    
-    enum EncryptionMode {
-        NONE,
-        NACL_SECRETBOX,
-        AES_256_GCM
+        string reply_to;
+        ContextReference[] public_references;
+        AccessGrant[] access_grants;
+        bytes message;
+        MetadataEntry[] metadata;
     }
 }
 ```
 
+<!-- AUTO-GENERATED SECTION: development-solidity-example -->
+```solidity
+enum MessageType {
+    CORE_MESSAGE,
+    MULTIPART_MESSAGE_PART
+}
+
+enum EncryptionMode {
+    NONE,
+    PROTECTED,
+    PUBLIC_KEY
+}
+```
+<!-- END AUTO-GENERATED SECTION -->
+
 **Build System:**
 ```bash
-# Generate Solidity contracts
+# Generate Solidity contracts from protobuf
 make proto
 
 # Build contracts with Foundry
@@ -165,11 +208,11 @@ make sol-test
 **Purpose:** Generate TypeScript types and SDK components from protobuf definitions
 
 **Generates:**
-- `typescript/src/types/enums.ts` - TypeScript enum classes with conversion utilities
-- `typescript/src/types/exceptions.ts` - SDK exception hierarchy
-- `typescript/src/client/base.ts` - Base client infrastructure
-- `typescript/src/hooks/index.ts` - React hooks for web integration
 - `typescript/src/index.ts` - Main SDK export file
+- `typescript/src/types/exceptions.ts` - SDK exception hierarchy
+- `typescript/src/types/enums.ts` - TypeScript enum classes with conversion utilities
+- `typescript/src/client/base.ts` - Base client infrastructure
+- `typescript/src/hooks/index.tsx` - React hooks for web integration
 
 **Features:**
 - Automatic enum extraction from protobuf
@@ -182,11 +225,24 @@ make sol-test
 ```typescript
 // Generated enum usage
 import { MessageType, EncryptionMode } from '@postfiat/sdk';
+```
 
-const msgType = MessageType.CONTEXTUAL_MESSAGE;
-const encryption = EncryptionMode.NACL_SECRETBOX;
+<!-- AUTO-GENERATED SECTION: development-typescript-example -->
+```typescript
+// Available values: MessageType.CORE_MESSAGE, MessageType.MULTIPART_MESSAGE_PART
 
-// Convert to/from protobuf
+// Available values: EncryptionMode.NONE, EncryptionMode.PROTECTED, EncryptionMode.PUBLIC_KEY
+```
+<!-- END AUTO-GENERATED SECTION -->
+
+**Example usage:**
+```typescript
+const msgType = MessageType.CORE_MESSAGE;
+const encryption = EncryptionMode.PROTECTED;
+```
+
+**Convert to/from protobuf:**
+```typescript
 const pbValue = MessageType.toProtobuf(msgType);
 const tsValue = MessageType.fromProtobuf(pbValue);
 ```
@@ -198,11 +254,11 @@ const tsValue = MessageType.fromProtobuf(pbValue);
 
 **Generates:**
 - `python/postfiat/models/envelope_enums.py` - Message envelope enums
-- `python/postfiat/managers/` - Service manager classes
-- `python/postfiat/services/` - Service implementation stubs
-- `python/postfiat/clients/` - Client wrapper classes
-- `python/postfiat/integrations/discord/` - Discord command mappers
-- `api/` - OpenAPI/Swagger specifications
+- `python/postfiat/models/common_enums.py` - Common Pydantic-compatible enums
+- `python/postfiat/services/impl/envelope_storage_impl.py` - Service implementation stubs
+- `python/postfiat/services/impl/content_storage_impl.py` - Service implementation stubs
+- `python/postfiat/services/impl/agent_registry_impl.py` - Service implementation stubs
+- `api/openapi_v2_generated.swagger.json` - OpenAPI/Swagger specifications
 
 **Features:**
 - Automatic service discovery from protobuf
@@ -211,17 +267,45 @@ const tsValue = MessageType.fromProtobuf(pbValue);
 - OpenAPI generation for REST endpoints
 - Discord integration for command handling
 
-### 6. TypeScript Test Generation
+### 6. Documentation Generation
+
+**Script:** `scripts/generate_docs.py`
+**Purpose:** Generate comprehensive documentation with automated content synchronization
+
+**Generates:**
+- `docs/generated/proto/index.md` - Complete protobuf API reference (via protoc-gen-doc)
+- `docs/api/openapi.md` - OpenAPI wrapper file with Swagger UI integration
+- Dynamic content in `docs/SERVICES.md` - Service matrices - Auto-generated gRPC service tables
+- Dynamic content in `docs/ARCHITECTURE.md` - Enum snippets - Synchronized examples
+- Dynamic content in `docs/DEVELOPMENT.md` - Enum snippets - Synchronized examples
+
+**Features:**
+- **Auto-generated sections:** Uses `<!-- AUTO-GENERATED SECTION: xyz -->` markers
+- **Enum synchronization:** Extracts enums from proto files to prevent documentation drift
+- **Multi-format support:** Generates protobuf, Solidity, Python, and TypeScript examples
+- **Service matrix generation:** Creates comprehensive gRPC service documentation
+- **OpenAPI integration:** Cross-references REST endpoints with service methods
+
+**Commands:**
+```bash
+# Generate all documentation (includes TypeScript docs via TypeDoc)
+make docs
+
+# Generate only protobuf docs, service matrices, and enum snippets
+python scripts/generate_docs.py
+```
+
+### 7. TypeScript Test Generation
 
 **Script:** `typescript/scripts/generate-typescript-tests.ts`
 **Purpose:** Generate comprehensive TypeScript test suites from protobuf definitions
 
 **Generates:**
 - `typescript/tests/generated/enums.test.ts` - Enum conversion and validation tests
-- `typescript/tests/generated/exceptions.test.ts` - Exception handling tests
 - `typescript/tests/generated/client.test.ts` - Client SDK tests
-- `typescript/tests/generated/hooks.test.ts` - React hooks tests
 - `typescript/tests/generated/integration.test.ts` - Integration test suite
+- `typescript/tests/generated/exceptions.test.ts` - Exception handling tests
+- `typescript/tests/generated/hooks.test.tsx` - React hooks tests
 
 **Features:**
 - Jest-based testing framework
@@ -230,7 +314,7 @@ const tsValue = MessageType.fromProtobuf(pbValue);
 - Client SDK integration testing
 - React hooks testing with modern patterns
 
-### 7. Solidity Test Generation
+### 8. Solidity Test Generation
 
 **Tool:** Foundry (forge)
 **Purpose:** Test generated Solidity contracts and custom contract implementations
@@ -247,18 +331,41 @@ const tsValue = MessageType.fromProtobuf(pbValue);
 - Cross-language compatibility testing
 
 **Example:**
+
+<!-- AUTO-GENERATED SECTION: development-solidity-test-example -->
+```solidity
+enum MessageType {
+    CORE_MESSAGE,
+    MULTIPART_MESSAGE_PART
+}
+
+enum EncryptionMode {
+    NONE,
+    PROTECTED,
+    PUBLIC_KEY
+}
+```
+<!-- END AUTO-GENERATED SECTION -->
+
 ```solidity
 // Test generated protobuf contracts
 contract PostfiatV3Test is Test {
-    function testContextualMessage() public {
-        Postfiat_V3.ContextualMessage memory msg = Postfiat_V3.ContextualMessage({
-            content: "Hello, World!",
-            message_type: Postfiat_V3.MessageType.CONTEXTUAL_MESSAGE,
-            encryption: Postfiat_V3.EncryptionMode.NACL_SECRETBOX
+    function testEnvelope() public {
+        Postfiat_V3.Envelope memory envelope = Postfiat_V3.Envelope({
+            version: 1,
+            content_hash: "0x1234",
+            message_type: Postfiat_V3.MessageType.CORE_MESSAGE,
+            encryption: Postfiat_V3.EncryptionMode.PROTECTED,
+            reply_to: "",
+            public_references: new Postfiat_V3.ContextReference[](0),
+            access_grants: new Postfiat_V3.AccessGrant[](0),
+            message: "Hello, World!",
+            metadata: new MetadataEntry[](0)
         });
         
-        assertEq(msg.content, "Hello, World!");
-        assertEq(uint8(msg.message_type), uint8(Postfiat_V3.MessageType.CONTEXTUAL_MESSAGE));
+        assertEq(envelope.version, 1);
+        assertEq(uint8(envelope.message_type), uint8(Postfiat_V3.MessageType.CORE_MESSAGE));
+        assertEq(uint8(envelope.encryption), uint8(Postfiat_V3.EncryptionMode.PROTECTED));
     }
 }
 ```
@@ -274,9 +381,8 @@ cd solidity && forge test --match-contract PostfiatV3Test
 # Run with gas reporting
 cd solidity && forge test --gas-report
 ```
-- Auto-generated test data and scenarios
 
-### 6. Test Generation
+### 9. Test Generation
 
 **🆕 Dynamic Test Generator (Recommended):**
 **Script:** `python/scripts/generate_dynamic_protobuf_tests.py`
@@ -300,6 +406,21 @@ cd solidity && forge test --gas-report
 - **Enum Validation:** Verifies enum values and conversions
 - **Service Integration:** Tests service method signatures
 - **Schema Evolution:** Tests backward compatibility and field number stability
+
+## 🔧 Recent Improvements
+
+### Enhanced Documentation Generation
+
+**New Features Added:**
+- **protoc-gen-doc integration:** Automatic installation via `make deps` for comprehensive proto documentation
+- **Enum synchronization system:** Prevents documentation drift by auto-generating enum examples
+- **Service matrix generation:** Auto-generated gRPC service tables in SERVICES.md
+- **Multi-format enum examples:** Supports protobuf, Solidity, Python, and TypeScript contexts
+
+**Dependencies Resolved:**
+- Added Go-based `protoc-gen-doc` installation to local development workflow
+- Enhanced error messaging when Go is not available
+- Synchronized local and CI dependency management
 
 ## 📦 Version Management
 
@@ -329,7 +450,7 @@ graph TD
 **Automated Update (Recommended):**
 ```bash
 # Update VERSION file
-echo "0.2.0-rc2" > VERSION
+echo "0.4.0" > VERSION
 
 # Update all packages automatically
 ./scripts/update-all-versions.sh
@@ -346,15 +467,18 @@ cd typescript && npm run update-version
 
 **Generated Files:**
 - `python/pyproject.toml`: Uses dynamic versioning via `setup.py`
-- `python/postfiat/__init__.py`: `__version__ = "0.2.0-rc2"`
-- `typescript/package.json`: `"version": "0.2.0-rc2"`
-- `typescript/src/index.ts`: `export const VERSION = '0.2.0-rc2'`
+- `python/postfiat/__init__.py`: `__version__ = "0.4.0"`
+- `typescript/package.json`: `"version": "0.4.0"`
+- `typescript/src/index.ts`: `export const VERSION = '0.4.0'`
 - `typescript/src/client/base.ts`: User-Agent header with version
 
 **Version Validation:**
 ```bash
-# Check Python version
-cd python && python -c "import postfiat; print(postfiat.__version__)"
+# Check current centralized version
+cat VERSION
+
+# Check Python version (if generated)
+cd python && python -c "import postfiat; print(postfiat.__version__)" 2>/dev/null || echo "Not yet generated"
 
 # Check TypeScript version  
 cd typescript && node -e "console.log(require('./package.json').version)"
@@ -365,112 +489,209 @@ cd typescript && node -e "console.log(require('./package.json').version)"
 
 ### Release Process
 
-1. **Update VERSION file:** `echo "0.2.0-rc2" > VERSION`
+1. **Update VERSION file:** `echo "0.4.0" > VERSION`
 2. **Update all packages:** `./scripts/update-all-versions.sh`
 3. **Test changes:** Run test suites across all packages
-4. **Commit changes:** `git add . && git commit -m "feat: bump to 0.2.0-rc2"`
-5. **Create release tag:** `git tag release-0.2.0-rc2 && git push --tags`
+4. **Commit changes:** `git add . && git commit -m "feat: bump to 0.4.1"`
+5. **Create release tag:** `git tag release-0.4.1 && git push --tags`
 6. **CI builds artifacts:** GitHub Actions automatically creates release artifacts
 
 ## 🔄 Development Workflow
 
 ### Local Development
 
-1. **Edit Proto Files:**
-   ```bash
-   # Edit proto/postfiat/v3/*.proto
-   vim proto/postfiat/v3/messages.proto
-   ```
+**Edit Proto Files:**
+```bash
+# Edit proto/postfiat/v3/*.proto
+vim proto/postfiat/v3/messages.proto
+```
 
-2. **Generate Code:**
-   ```bash
-   # Generate protobuf classes
-   cd proto && buf generate --template buf.gen.yaml && cd ..
-   
-   # Generate Python types and tests
-   cd python && python scripts/generate_python_types.py
-   python scripts/generate_protobuf.py
-   python scripts/generate_dynamic_protobuf_tests.py && cd ..
-   
-   # Generate TypeScript SDK
-   cd typescript && npm run generate:all && cd ..
-   ```
+**Initial Setup:**
+```bash
+# Install all dependencies (required for first-time setup)
+make deps
 
-3. **Test Changes:**
-   ```bash
-   # Run Python tests
-   cd python && pytest tests/ -v && cd ..
-   
-   # Run TypeScript tests
-   cd typescript && npm test && cd ..
-   
-   # Test specific components
-   python -c "from postfiat.v3 import messages_pb2; print('✅ Protobuf import works')"
-   python -c "from postfiat.types.enums import MessageType; print('✅ Enums work')"
-   ```
+# Setup A2A dependency (if not done automatically)
+./scripts/setup-a2a-dependency.sh
+```
+
+**Generate Code:**
+```bash
+# Generate protobuf classes (recommended: use Makefile)
+make proto
+
+# Or direct command (requires manual dependency setup)
+cd proto && buf generate --template buf.gen.yaml && cd ..
+
+# Generate Python types and tests
+cd python && python scripts/generate_python_types.py
+python scripts/generate_protobuf.py
+python scripts/generate_dynamic_protobuf_tests.py && cd ..
+
+# Generate TypeScript SDK
+cd typescript && npm run generate:all && cd ..
+
+# Or regenerate everything at once
+make regen-all
+```
+
+**Test Changes:**
+```bash
+# Run Python tests
+cd python && pytest tests/manual/ -v && cd ..      # Manual tests only
+cd python && pytest tests/ -v && cd ..             # All tests (manual + generated)
+
+# Run TypeScript tests
+cd typescript && npm test && cd ..
+
+# Run Solidity tests
+make sol-test
+
+# Test specific components
+python -c "from postfiat.v3 import messages_pb2; print('✅ Protobuf import works')"
+python -c "from postfiat.types.enums import MessageType; print('✅ Enums work')"
+
+# Run all tests across all languages
+make tests
+```
+
+**Version Management:**
+```bash
+# Update all package versions from VERSION file
+make bump-version
+```
 
 ### CI/CD Pipeline
 
-The CI automatically handles code generation and releases:
+The CI automatically handles validation, generation, testing, and building across multiple parallel jobs:
 
-**Code Generation Job:**
-1. Install dependencies (buf, python packages, node.js)
-2. Generate protobuf classes for Python and TypeScript
-3. Generate Python types and tests
-4. Generate TypeScript types and React hooks
-5. Run complete test suite
+**Main CI Workflow (`ci.yml`):**
 
-**Release Job (release-* tags):**
-1. Generate all code from protobuf definitions
-2. Build Python packages (.whl and .tar.gz)
-3. Build TypeScript packages (.tgz)
-4. Create GitHub release with attached artifacts
-5. No automatic publishing to npm/PyPI (manual control)
+**Triggers:** Push to main/dev branches, Pull requests to main/dev branches
+
+**Sequential Foundation:**
+- **`proto-validation`: Proto Validation** - Proto linting and breaking change detection (PR-only)
+- **`code-generation`: Code Generation** - Generate all protobuf classes and run comprehensive tests
+
+**Parallel Testing (Matrix Jobs):**
+- **`python-tests`: Python & TypeScript Tests** - Test across Python 3.10, 3.11, 3.12
+- **`solidity-tests`: Solidity Tests** - Foundry-based contract testing with gas reporting
+- **`typescript-tests`: TypeScript Tests** - Test across Node.js 20, 22
+
+**Dependent Build Jobs:**
+- **`build`: Build Python Package** - Requires proto-validation + python-tests + solidity-tests
+- **`typescript-build`: Build TypeScript Package** - Requires proto-validation + typescript-tests
+- **`solidity-build`: Build Solidity Package** - Requires proto-validation + solidity-tests
+
+**Key Features:**
+- **Auto-commit permissions:** Writes generated files back to repository
+- **Breaking change detection:** Only runs on pull requests
+- **Artifact uploads:** All build jobs upload distribution packages
+- **Matrix testing:** Ensures compatibility across multiple runtime versions
+
+**Key CI Steps (Makefile-driven):**
+
+```bash
+# Each job runs these core steps:
+make help           # Default target
+make bump-version           # Version bumping
+make regen-all           # Regenerate all code (proto + types + tests)
+make tests           # All tests across all languages
+make release           # Build all release artifacts (Python + TypeScript + Solidity)
+```
+
+**Release Workflows:**
+
+**`release.yml` (triggers on push tags: v*):**
+1. Complete code generation and version synchronization
+2. Build all release artifacts (Python, TypeScript, Solidity)
+3. Create GitHub release with comprehensive release notes
+4. Attach all build artifacts (`.whl`, `.tar.gz`, `.tgz`, contract archives)
+5. No automatic publishing to npm/PyPI (manual control for security)
+
+**`release-artifacts.yml` (triggers on push tags: release-*, v[0-9]+.[0-9]+.[0-9]+-*):**
+- Alternative release pipeline for artifact-only releases
+- Supports version tag patterns for flexible releasing
+
+**Documentation Deployment (`docs.yml`):**
+- Builds and deploys documentation to GitHub Pages
+- Triggers: triggers on push to: main, triggers on PRs to: main, manual dispatch
+- Uses `make docs` for comprehensive doc generation
 
 ## 📁 Generated File Management
 
 ### .gitignore Strategy
 
+**Status:** All essential patterns are properly configured.
+
 **Ignored (Generated) Files:**
-```gitignore
-# Generated protobuf Python files
-python/postfiat/v3/*_pb2.py
-python/postfiat/v3/*_pb2_grpc.py
 
-# Generated Python types
-python/postfiat/types/enums.py
-python/postfiat/exceptions.py
-python/postfiat/models/envelope_enums.py
-
-# Generated SDK components
-python/postfiat/managers/
-python/postfiat/services/
-python/postfiat/clients/
-python/postfiat/integrations/
-
-# Generated TypeScript files
-typescript/src/generated/
-typescript/src/client/
-typescript/src/types/
-typescript/src/index.ts
-typescript/tests/generated/
-typescript/dist/
-
-# Generated tests
-python/tests/generated/
-
-# Generated API documentation
-api/
-```
+| File/Directory | Type | Status |
+|---|---|---|
+| `postfiat_pfsdk.egg-info/` | Directory | Directory containing generated files |
+| `api/` | Directory | Directory containing generated files |
+| `site/` | Directory | Directory containing generated files |
+| `proto/a2a` | File | Directory containing generated files |
+| `third_party/googleapis/` | Directory | Directory containing generated files |
+| `bin/` | Directory | Directory containing generated files |
+| `docs/generated/` | Directory | Directory containing generated files |
+| `python/a2a/v1/a2a_pb2.py` | File | Auto-generated file |
+| `python/a2a/v1/a2a_pb2_grpc.py` | File | Auto-generated file |
+| `python/postfiat/v3/messages_pb2.py` | File | Auto-generated file |
+| `python/postfiat/v3/errors_pb2.py` | File | Auto-generated file |
+| `python/postfiat/v3/errors_pb2_grpc.py` | File | Auto-generated file |
+| `python/postfiat/v3/messages_pb2_grpc.py` | File | Auto-generated file |
+| `typescript/src/generated/` | Directory | Directory containing generated files |
+| `typescript/src/types/enums.ts` | File | Auto-generated file |
+| `typescript/src/types/exceptions.ts` | File | Auto-generated file |
+| `typescript/src/client/base.ts` | File | Auto-generated file |
+| `typescript/src/index.ts` | File | Auto-generated file |
+| `typescript/tests/generated/` | Directory | Directory containing generated files |
+| `solidity/src/generated/` | Directory | Directory containing generated files |
 
 **Committed (Source) Files:**
-- `proto/` - Protocol buffer definitions
-- `scripts/` - Generation scripts
-- `python/postfiat/__init__.py` - Python package root
-- `python/postfiat/client/base.py` - Python base client infrastructure
-- `typescript/src/hooks/` - TypeScript React hooks (non-generated)
-- `typescript/package.json` - TypeScript package configuration
-- `tests/manual/` - Manual tests
+
+| File/Directory | Type | Description |
+|---|---|---|
+| `proto/` | Directory | Protocol buffer definitions |
+| `proto/buf.gen.yaml` | File | Generation configuration |
+| `proto/buf.gen.docs.yaml` | File | Documentation generation config |
+| `proto/buf.gen.openapi-only.yaml` | File | OpenAPI generation config |
+| `proto/buf.yaml` | File | Buf workspace configuration |
+| `proto/buf.lock` | File | Buf dependency lock file |
+| `VERSION` | File | Centralized version file |
+| `python/pyproject.toml` | File | Python package configuration |
+| `typescript/package.json` | File | TypeScript package configuration |
+| `typescript/tsconfig.json` | File | TypeScript compiler configuration |
+| `solidity/package.json` | File | Solidity dependencies |
+| `solidity/foundry.toml` | File | Foundry build configuration |
+| `mkdocs.yml` | File | Documentation site configuration |
+| `Makefile` | File | Build orchestration |
+| `scripts/` | Directory | All generation and build scripts |
+| `python/scripts/` | Directory | Python-specific generators |
+| `typescript/scripts/` | Directory | TypeScript-specific generators |
+| `solidity/script/` | Directory | Solidity deployment scripts |
+| `.github/workflows/` | Directory | GitHub Actions workflow definitions |
+| `.gitignore` | File | Version control ignore patterns |
+| `third_party/a2a/` | Directory | A2A protocol submodule |
+| `third_party/forge-std/` | Directory | Foundry standard library submodule |
+| `third_party/googleapis/` | Directory | Google APIs submodule |
+| `README.md` | File | Main project documentation |
+| `python/README.md` | File | Python SDK documentation |
+| `typescript/README.md` | File | TypeScript SDK documentation |
+| `python/MANIFEST.in` | Directory | Python package manifest |
+| `docs/` | Directory | Core documentation files (non-generated) |
+| `overrides/` | Directory | MkDocs theme customizations |
+| `python/postfiat/__init__.py` | File | Python package root |
+| `python/postfiat/envelope/` | Directory | Envelope utilities (manual) |
+| `typescript/src/hooks/` | Directory | React hooks (non-generated) |
+| `solidity/src/contracts/` | Directory | Manual Solidity contracts |
+| `python/tests/manual/` | Directory | Manual Python test suites |
+| `typescript/tests/manual/` | Directory | Manual TypeScript test suites |
+| `typescript/tests/setup.js` | File | TypeScript test setup |
+| `solidity/test/` | Directory | Manual Solidity test files |
+| `python/examples/` | Directory | Python usage examples |
+| `typescript/examples/` | Directory | TypeScript usage examples |
 
 ### Branch-Specific Behavior
 
@@ -492,29 +713,35 @@ api/
 ```
 python/tests/
 ├── manual/                    # Manual tests (committed)
-│   ├── test_client_integration.py
-│   ├── test_business_logic.py
-│   └── test_edge_cases.py
-└── generated/                 # Auto-generated tests (ignored)
+│   ├── unit/                 # Unit tests
+│   │   ├── conftest.py
+│   │   ├── test_agent_registry_service.py
+│   │   ├── test_content_storage_service.py
+│   │   └── test_envelope_storage_service.py
+│   ├── test_content_storage.py
+│   └── test_envelope_store.py
+└── generated/                 # Auto-generated tests (aspirational)
     ├── test_dynamic_serialization.py    # 🆕 Dynamic serialization tests
-    ├── test_dynamic_validation.py       # 🆕 Dynamic field/enum validation
+    ├── test_dynamic_validation.py       # 🆕 Dynamic field/enum validation  
     ├── test_dynamic_services.py         # 🆕 Dynamic service tests
-    ├── test_dynamic_evolution.py        # 🆕 Schema evolution tests
-    ├── test_contract_validation.py      # Legacy hardcoded tests
-    ├── test_serialization_integrity.py  # Legacy hardcoded tests
-    └── test_persistence_scaffolding.py  # Legacy hardcoded tests
+    └── test_dynamic_evolution.py        # 🆕 Schema evolution tests
 
 typescript/tests/
 ├── manual/                    # Manual tests (committed)
 │   ├── integration/          # Integration tests
 │   │   └── selective-disclosure.test.ts  # 🎯 Enhanced 3,048 scenario test
 │   └── unit/                 # Unit tests
-│       └── PostFiatCrypto.test.ts
-└── generated/                # Auto-generated tests (ignored)
-    ├── enums.test.ts
-    ├── exceptions.test.ts
-    ├── client.test.ts
-    └── hooks.test.ts
+│       ├── content-storage.test.ts
+│       ├── envelope-store.test.ts
+│       ├── PostFiatCrypto.test.ts
+│       └── services.test.ts
+├── setup.js                  # Test setup (committed)
+└── generated/                # Auto-generated tests (committed)
+    ├── enums.test.ts         # Enum conversion and validation tests
+    ├── exceptions.test.ts    # Exception handling tests
+    ├── client.test.ts        # Client SDK tests
+    ├── hooks.test.tsx        # React hooks tests
+    └── integration.test.ts   # Integration test suite
 ```
 
 ### Test Types
@@ -590,40 +817,107 @@ npm run test:selective-disclosure
    syntax = "proto3";
    package postfiat.v3;
    
+   import "google/api/annotations.proto";
+   
    service NewService {
-     rpc DoSomething(DoSomethingRequest) returns (DoSomethingResponse);
+     rpc DoSomething(DoSomethingRequest) returns (DoSomethingResponse) {
+       option (google.api.http) = {
+         post: "/v3/new-service/do-something"
+         body: "*"
+       };
+     };
+   }
+   
+   message DoSomethingRequest {
+     string input = 1;
+   }
+   
+   message DoSomethingResponse {
+     string result = 1;
    }
    ```
 
 2. **Regenerate code:**
-   ```bash
-   python scripts/generate_protobuf.py
-   ```
+
+```bash
+make proto
+```
 
 3. **Generated automatically:**
-   - Service manager class
-   - Client stub
-   - gRPC service implementation
-   - OpenAPI specification
+   - Protocol buffer message classes (`*_pb2.py`, `*_pb.ts`, `*.sol`)
+   - gRPC client stubs (`*_pb2_grpc.py`, `*_connect.ts`) 
+   - OpenAPI specification (updated `api/openapi_v2_generated.swagger.json`)
+   - Solidity contract bindings (`*.sol` in `solidity/src/generated/`)
+
+4. **Manual steps required:**
+   - Service implementation classes
    - Integration tests
+   - Business logic
+
+### Available Generator Scripts
+
+**Current generator scripts:**
+- `python/scripts/ci_test_generation.py` - CI test automation and generation
+- `python/scripts/dev_test_regen.py` - Development test regeneration utilities
+- `python/scripts/generate_dynamic_protobuf_tests.py` - Dynamic proto introspection tests
+- `python/scripts/generate_fastapi_services.py` - FastAPI service implementations
+- `python/scripts/generate_protobuf.py` - Comprehensive protobuf code generation
+- `python/scripts/generate_python_types.py` - Python type classes and enums
+- `python/scripts/generate_service_tests.py` - Service test scaffolding
+- `python/scripts/proto_introspection.py` - Protocol buffer introspection utilities
+- `python/scripts/schema_evolution_test_generator.py` - Schema evolution and compatibility tests
+- `python/scripts/serialization_test_generator.py` - Serialization round-trip test generation
+- `python/scripts/service_test_generator.py` - Service method test generation
+- `python/scripts/validation_test_generator.py` - Field validation test generation
+- `typescript/scripts/generate-typescript-tests.ts` - TypeScript test generation
+- `typescript/scripts/generate-typescript-types.ts` - TypeScript enums and exceptions
+- `typescript/scripts/update-version.js` - Version synchronization utility
 
 ### Adding Custom Generators
 
 1. **Create generator script:**
    ```python
-   # scripts/generate_custom_component.py
+   # python/scripts/generate_custom_component.py
    def generate_custom_component():
        # Your generation logic
        pass
+   
+   if __name__ == "__main__":
+       generate_custom_component()
    ```
 
-2. **Add to CI pipeline:**
+2. **Add to Makefile:**
+   ```makefile
+   custom-gen:
+   	cd python && python scripts/generate_custom_component.py
+   	@echo "✅ Custom component generation complete"
+   ```
+
+3. **Add to CI pipeline:**
    ```yaml
    - name: Generate custom component
-     run: python scripts/generate_custom_component.py
+     run: make custom-gen
+   ```
+
+4. **Integration with main build:**
+   ```makefile
+   # Add to regen-all target (current: regen-all: proto types tests)
+   regen-all: proto types tests custom-gen
    ```
 
 ## 📊 Monitoring and Debugging
+
+### Prerequisites
+
+Before running any generation scripts, ensure dependencies are installed:
+
+```bash
+# Install SDK dependencies (required for all scripts)
+pip install -e .
+
+# Generate protobuf files (required for type generation)
+make proto
+```
 
 ### Structured Logging
 
@@ -639,32 +933,40 @@ logger = get_logger("my_component")
 logger.info("Processing request", user_id="123", action="create_wallet")
 ```
 
-**Environment-Aware Output:**
-- **Development/Testing:** Human-readable console output
-- **Production:** JSON structured logs
+**Environment-Aware Output Formats:**
+- **Development/Testing:** Human-readable console with colors and timestamps
+  ```
+  2025-07-28 19:15:23.456 | INFO     | my_component:process:45 - Processing request | user_id=123 action=create_wallet
+  ```
+- **Production:** JSON structured logs for machine parsing
+  ```json
+  {"timestamp": "2025-07-28T19:15:23.456Z", "level": "info", "logger": "my_component", "event": "Processing request", "user_id": "123", "action": "create_wallet"}
+  ```
 - **pytest:** Plain text for test readability
 
-### Generation Logs
+### Generation Script Logs
 
-All generation scripts provide detailed structured logging:
+All generation scripts provide detailed structured logging with human-readable console output:
+
 ```bash
 python scripts/generate_python_types.py
-# {"event": "Starting protobuf-based type generation", "level": "info", "timestamp": "2025-07-04T16:20:00.123Z"}
-# {"enum_types_count": 5, "modules": ["messages", "errors"], "event": "Discovered protobuf definitions", "level": "info"}
+# 🔄 Generating Python types from protobuf definitions...
+# 2025-07-28 19:15:23.456 | INFO     | generate_python_types:main:45 - Starting type generation
+# 2025-07-28 19:15:23.567 | INFO     | generate_python_types:scan:78 - Discovered protobuf definitions | enum_types_count=5 modules=['messages', 'errors']
 # ✅ Generated /path/to/postfiat/types/enums.py
 # ✅ Generated /path/to/postfiat/exceptions.py
 
 python scripts/generate_dynamic_protobuf_tests.py
-# 🎯 NEW: Dynamic Proto Test Generation with Runtime Introspection
-# {"event": "Discovered 10 proto message classes", "level": "info", "timestamp": "2025-07-07T10:35:16.856532Z"}
-# {"event": "✅ Generated serialization tests: tests/generated/test_dynamic_serialization.py", "level": "info"}
-# {"event": "✅ Generated evolution tests: tests/generated/test_dynamic_evolution.py", "level": "info"}
+# 🎯 Dynamic Proto Test Generation with Runtime Introspection
+# 2025-07-28 19:16:15.123 | INFO     | proto.dynamic_test_generator:discover:120 - Discovered proto message classes | count=10
+# 2025-07-28 19:16:15.234 | INFO     | proto.dynamic_test_generator:generate:155 - Generated serialization tests | output_file=tests/generated/test_dynamic_serialization.py
+# 2025-07-28 19:16:15.345 | INFO     | proto.dynamic_test_generator:generate:197 - Generated evolution tests | output_file=tests/generated/test_dynamic_evolution.py
 # ✅ SUCCESS: Dynamic proto test generation complete!
 
 python scripts/generate_protobuf.py
 # 🚀 Generating comprehensive SDK from protobuf definitions...
-# 📊 Found 3 message types and 0 services
-# 📝 Generated envelope enums for 3 message types
+# 2025-07-28 19:17:00.123 | INFO     | generate_protobuf:scan:45 - Found message types and services | messages=3 services=0
+# 2025-07-28 19:17:00.234 | INFO     | generate_protobuf:generate:89 - Generated envelope enums | message_types=3
 # ✅ Generation complete!
 ```
 
@@ -679,20 +981,22 @@ Check GitHub Actions for detailed logs:
 ### Common Issues
 
 **Import Errors:**
-- Ensure all dependencies installed: `pip install -e .`
+- **Prerequisites:** Ensure dependencies installed (`pip install -e .`) and proto files generated (`make proto`)
 - Check namespace consistency: `postfiat.v3` vs `postfiat.wallet.v3`
+- Verify all required protobuf modules are available
 
 **Generation Failures:**
+- **Prerequisites:** Install dependencies (`pip install -e .`) before running generators
 - Verify proto syntax: `buf lint`
 - Check buf configuration: `buf.yaml` and `buf.gen.yaml`
-- Ensure all imports available
+- Ensure all imports and dependencies available
 
 **Test Failures:**
+- **Prerequisites:** Ensure dependencies installed (`pip install -e .`) and proto files generated (`make proto`)
 - Regenerate dynamic tests: `cd python && python scripts/generate_dynamic_protobuf_tests.py`
 - Use CI integration: `cd python && python scripts/ci_test_generation.py --force`
 - Check protobuf message compatibility
 - Verify enum values match proto definitions
-- For legacy tests: `cd python && python scripts/generate_protobuf_tests.py` *(deprecated)*
 
 ## � Logging Best Practices
 
@@ -736,23 +1040,59 @@ logger.error(
 )
 ```
 
+**Warning Level Logging:**
+```python
+logger.warning(
+    "Envelope not found",
+    envelope_id=request.envelope_id,
+    operation="retrieve"
+)
+```
+
 **Debug Information:**
 ```python
 logger.debug(
-    "Cache operation",
-    cache_key=key,
-    cache_hit=hit,
-    ttl_seconds=ttl
+    "Found envelopes in store",
+    store_name=store_name,
+    count=len(store_results),
+    content_hash=content_hash.hex()[:16] + "..."
 )
 ```
 
 ### Generated Code Logging
 
 The code generators automatically add logging to:
+
 - **Exception factory functions:** `create_exception_from_error_code()`
 - **Error processing utilities:** `create_exception_from_error_info()`
 - **Serialization methods:** `PostFiatError.to_dict()`
 - **Test generation:** Discovery and generation progress
+
+**Generated Exception Factory Example:**
+```python
+# Auto-generated in postfiat/exceptions.py
+def create_exception_from_error_code(error_code, message, **kwargs):
+    logger = get_logger("exceptions.factory")
+    logger.info(
+        "Creating exception from error code",
+        error_code=error_code.name,
+        error_value=error_code.value,
+        message=message
+    )
+```
+
+**Generated Serialization Example:**
+```python
+# Auto-generated in PostFiatError.to_dict()
+def to_dict(self):
+    logger = get_logger("exceptions.serialization")
+    logger.debug(
+        "Serialized exception to dictionary",
+        exception_type=self.__class__.__name__,
+        error_code=result['error_code'],
+        has_details=bool(self.details)
+    )
+```
 
 Pure data classes (enums, simple exceptions) remain clean without logging.
 
@@ -772,12 +1112,12 @@ Pure data classes (enums, simple exceptions) remain clean without logging.
 
 ## 📋 Best Practices
 
-1. **Proto-first development:** Always start with proto definitions
-2. **Consistent naming:** Follow protobuf naming conventions
-3. **Backward compatibility:** Use field numbers carefully
-4. **Documentation:** Document proto files thoroughly
-5. **Testing:** Test both manual and generated components
-6. **Version management:** Use semantic versioning for releases
+- **Proto-first development:** Always start with proto definitions
+- **Consistent naming:** Follow protobuf naming conventions
+- **Backward compatibility:** Use field numbers carefully
+- **Documentation:** Document proto files thoroughly
+- **Testing:** Test both manual and generated components
+- **Version management:** Use semantic versioning for releases
 
 This architecture ensures maintainable, scalable, and robust SDK development with minimal manual overhead. 🎯
 
@@ -792,93 +1132,115 @@ make dev-setup  # Installs all dependencies and generates code
 
 ### Code Generation
 ```bash
-make proto      # Generate protobuf classes
-make types      # Generate Python types
-make tests      # Generate dynamic proto tests (Python)
-make regen-all  # Regenerate everything (proto + types + tests)
+make proto          # Generate protobuf classes
+make types          # Generate Python types
+make tests-dynamic  # Generate dynamic proto tests (Python)
+make regen-all      # Regenerate everything (proto + types + tests-dynamic)
 ```
 
 ### Testing
 ```bash
+make tests-dynamic  # Generate dynamic proto tests (Python)
 make tests-manual   # Run manual Python tests
 make tests-core     # Run core dynamic Python tests
-make tests-all      # Run all generated Python tests
+make tests-all      # Run all generated and manual Python tests
 make ts-build       # Build TypeScript SDK
 make ts-test        # Run TypeScript tests
 make ts-test-all    # Run all TypeScript unit and integration tests
-make test           # Run all Python and TypeScript tests (recommended)
+make tests          # Run all tests (Python + TypeScript + Solidity) - RECOMMENDED
+make test           # Alias for 'tests'
 ```
 
-- The `test` target runs both Python and TypeScript tests for full coverage.
-- All TypeScript build/test commands are now available via Makefile.
+- The `tests` target runs Python, TypeScript, and Solidity tests for full coverage.
+- `test` is simply an alias for `tests`.
+- All TypeScript build/test commands are available via Makefile.
 
-## 🧪 TypeScript Test Generation
+### 🧪 TypeScript Test Generation
 
-- To generate and run TypeScript tests:
+To generate and run TypeScript tests:
 ```bash
 make ts-test-all
 ```
 
-## 🧪 Running All Tests
+### 🧪 Running All Tests
 
-- To run all tests (Python + TypeScript):
+To run all tests (Python + TypeScript + Solidity):
 ```bash
-make test
+make tests
 ```
 
 ## 🚦 CI/CD Flows & Makefile-Driven Development
 
-The PostFiat SDK uses a **Makefile-driven workflow** for all build, test, code generation, versioning, and documentation tasks. This ensures that what you run locally is exactly what CI runs, making it easy to anticipate and debug CI failures.
+The PostFiat SDK uses a Makefile-driven workflow for all build, test, code generation, versioning, and documentation tasks. This ensures that what you run locally is exactly what CI runs, making it easy to anticipate and debug CI failures.
 
 ### CI/CD Flows
 
-1. **Verification (PRs, pushes to dev/main):**
-   - Lint, verify, and generate code from protobufs
-   - Run all code generation
-   - Run all tests (Python & TypeScript, all supported versions)
-   - Ensure build artifacts (.whl, .tar.gz, .tgz) can be created
-   - **CI:** Calls `make bump-version`, `make regen-all`, `make tests`, `make build-py`, `make build-ts`
+**Verification (PRs, pushes to dev/main):**
+- Proto validation and linting
+- Code generation across all languages
+- Matrix testing:
+  - **Python:** 3.10, 3.11, 3.12
+  - **TypeScript:** Node.js 20, 22
+  - **Solidity:** Foundry with gas reporting
+- Build verification for all packages
+- **CI:** Calls `make bump-version`, `make regen-all`, `make tests`, `make build-py`, `make build-ts`, `make build-sol`
 
-2. **Release (on tag push):**
-   - Build and upload release artifacts to GitHub Releases (Python wheels, tarballs, TypeScript tgz, etc.)
-   - **CI:** Calls `make bump-version`, `make regen-all`, `make release`
+**Release (on tag push):**
+- Build and upload release artifacts to GitHub Releases (Python wheels, tarballs, TypeScript tgz, etc.)
+- **CI:** Calls `make bump-version`, `make regen-all`, `make release`
 
-3. **Docs (on merge to main):**
-   - Build and publish documentation site (mkdocs, Sphinx, Swagger/OpenAPI, TypeDoc, etc.)
-   - **CI:** Calls `make docs` and deploys the result
+**Docs (on merge to main):**
+- Build and publish documentation site (mkdocs, Sphinx, Swagger/OpenAPI, TypeDoc, etc.)
+- **CI:** Calls `make docs` and deploys the result
 
 ### Local Development
 
-- **All major workflows are Makefile-driven:**
-  - `make dev-setup` — Install all dependencies and generate code
-  - `make regen-all` — Regenerate everything (proto + types + tests)
-  - `make tests` — Run all Python and TypeScript tests (recommended)
-  - `make build-py` — Build Python package(s)
-  - `make build-ts` — Build TypeScript package(s)
-  - `make release` — Build all release artifacts
-  - `make docs` — Build all documentation
+All major workflows are Makefile-driven:
+```bash
+make dev-setup   # Install all dependencies and generate code
+make regen-all   # Regenerate everything (proto + types + tests-dynamic)
+make tests       # Run all tests (Python + TypeScript + Solidity) - RECOMMENDED
+make build-py    # Build Python package(s)
+make build-ts    # Build TypeScript package(s)
+make build-sol   # Build Solidity contracts
+make release     # Build all release artifacts
+make docs        # Build all documentation
+```
 
-- **CI mirrors local development:**
-  - All CI jobs call Makefile targets for build, test, codegen, versioning, and docs
-  - No duplicated shell logic between local and CI
-  - If it works locally, it will work in CI
+**CI mirrors local development:**
+- All CI jobs call Makefile targets for build, test, codegen, versioning, and docs
+- No duplicated shell logic between local and CI
+- If it works locally, it will work in CI
 
-- **Branch protection:**
-  - Managed via a manual GitHub workflow (`setup-repo.yml`) for repo admins
-  - Not part of the Makefile, as it is a rare, admin-only task
+**Branch protection:**
+- Managed via a manual GitHub workflow (`setup-repo.yml`) for repo admins
+- Not part of the Makefile, as it is a rare, admin-only task
 
 ### Example: Running Everything Locally
 
 ```bash
 make dev-setup      # One-time setup
 make bump-version   # Update all version strings
-make regen-all      # Regenerate all code and tests
-make tests          # Run all tests (Python + TypeScript)
+make regen-all      # Regenerate all code (proto + types + tests-dynamic)
+make tests          # Run all tests (Python + TypeScript + Solidity)
 make build-py       # Build Python package(s)
 make build-ts       # Build TypeScript package(s)
+make build-sol      # Build Solidity contracts
 make release        # Build all release artifacts
 make docs           # Build all documentation
 ```
 
-- See `make help` for a full list of available targets.
-- All contributors should use the Makefile for all build, test, and codegen tasks.
+### Additional Targets
+
+```bash
+make sol-deps       # Install Solidity dependencies + protoc-gen-sol plugin
+make sol-build      # Compile Solidity contracts
+make sol-test       # Run Solidity tests
+make sol-clean      # Clean Solidity build artifacts
+make clean          # Clean generated files and caches
+make deps           # Install all Python and TypeScript dependencies
+```
+
+See `make help` for a full list of available targets.
+
+**All contributors should use the Makefile for all build, test, and codegen tasks.**

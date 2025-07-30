@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Fix import statements in generated Solidity files.
 The protobuf3-solidity plugin incorrectly places imports inside library blocks.

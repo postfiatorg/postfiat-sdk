@@ -76,22 +76,48 @@ graph TB
 **Usage:**
 ```protobuf
 syntax = "proto3";
-package postfiat.v3;
+package postfiat.v3;  // API version
 
-message ContextualMessage {
-  string content = 1;
-  MessageType type = 2;
-  EncryptionMode encryption = 3;
+// Top-level envelope - stored unencrypted in XRPL memo
+message Envelope {
+  uint32 version = 1;
+  bytes content_hash = 2;
+  MessageType message_type = 3;            // Uses the MessageType enum
+  EncryptionMode encryption = 4;           // Uses the EncryptionMode enum
+  string reply_to = 5;
+  
+  // Public references, visible for discovery
+  repeated ContextReference public_references = 6;
+  
+  // Encrypted key material for decryption
+  repeated AccessGrant access_grants = 7;
+  
+  // Actual message content (may be encrypted)
+  bytes message = 8;
+  
+  map<string, string> metadata = 9;
 }
 
+<!-- AUTO-GENERATED SECTION: architecture-protobuf-example -->
+```protobuf
 enum MessageType {
-  CONTEXTUAL_MESSAGE = 0;
+  CORE_MESSAGE = 0;
   MULTIPART_MESSAGE_PART = 1;
 }
 
-service WalletService {
-  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
-  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+enum EncryptionMode {
+  NONE = 0;
+  PROTECTED = 1;
+  PUBLIC_KEY = 2;
+}
+```
+<!-- END AUTO-GENERATED SECTION -->
+
+```protobuf
+// gRPC service using the message types
+service PostFiatEnvelopeStorageService {
+  rpc StoreEnvelope(StoreEnvelopeRequest) returns (StoreEnvelopeResponse);
+  rpc RetrieveEnvelope(RetrieveEnvelopeRequest) returns (RetrieveEnvelopeResponse);
 }
 ```
 
@@ -108,26 +134,35 @@ service WalletService {
 
 **Generated Contracts:**
 ```solidity
-// Auto-generated from protobuf definitions
-library Postfiat_V3 {
-    struct ContextualMessage {
-        string content;
-        MessageType message_type;
-        EncryptionMode encryption;
+// Example showing generated Solidity structure (simplified)
+library Postfiat_V3 {  // API version
+    // Envelope struct from messages.proto
+    struct Envelope {
+        uint32 version;
+        bytes content_hash;
+        MessageType message_type;        // Uses the MessageType enum
+        EncryptionMode encryption;       // Uses the EncryptionMode enum
+        string reply_to;
+        ContextReference[] public_references;
+        AccessGrant[] access_grants;
+        bytes message;
+        MetadataEntry[] metadata;
     }
     
-    enum MessageType {
-        CONTEXTUAL_MESSAGE,
-        MULTIPART_MESSAGE_PART
-    }
-    
-    enum EncryptionMode {
-        NONE,
-        NACL_SECRETBOX,
-        AES_256_GCM
-    }
+    <!-- AUTO-GENERATED SECTION: architecture-solidity-example -->
+```solidity
+enum MessageType {
+    CORE_MESSAGE,
+    MULTIPART_MESSAGE_PART
+}
+
+enum EncryptionMode {
+    NONE,
+    PROTECTED,
+    PUBLIC_KEY
 }
 ```
+<!-- END AUTO-GENERATED SECTION -->
 
 **Build System:**
 - **Foundry:** Fast, modern Solidity development framework
@@ -167,14 +202,29 @@ library Postfiat_V3 {
 **Features:**
 ```python
 from fastapi import FastAPI
-from postfiat.models import CreateWalletRequest, CreateWalletResponse
+from postfiat.models import (
+    StoreAgentCardRequest, StoreAgentCardResponse,  # ✅ Available now
+    CreateWalletRequest, CreateWalletResponse       # 🚧 Planned
+)
+from postfiat.services import (
+    AgentRegistryServiceImpl,  # ✅ Available now
+    WalletServiceImpl          # 🚧 Planned
+)
 
-app = FastAPI(title="PostFiat API", version="0.1.0")
+app = FastAPI(title="PostFiat API", version="0.4.0")
 
-@app.post("/wallets", response_model=CreateWalletResponse)
+# ✅ Working: Agent management (current functionality)
+@app.post("/v3/agents", response_model=StoreAgentCardResponse)
+async def store_agent_card(request: StoreAgentCardRequest):
+    service = AgentRegistryServiceImpl()
+    return await service.store_agent_card(request)
+
+# 🚧 Planned: Wallet management (in development)
+@app.post("/v3/wallets", response_model=CreateWalletResponse)
 async def create_wallet(request: CreateWalletRequest):
-    # Auto-validated input, type-safe output
-    return await wallet_service.create_wallet(request)
+    # TODO: Implement when proto service is added
+    service = WalletServiceImpl()
+    return await service.create_wallet(request)
 ```
 
 ### Pydantic v2
@@ -190,24 +240,38 @@ async def create_wallet(request: CreateWalletRequest):
 
 **Features:**
 ```python
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BaseSettings, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
+# ✅ Working: Actual ClientConfig from codebase
+class ClientConfig(BaseSettings):
+    grpc_endpoint: Optional[str] = Field(None, description="gRPC server endpoint")
+    api_key: Optional[str] = Field(None, description="API key for authentication")
+    timeout: float = Field(30.0, description="Request timeout in seconds", gt=0)
+    use_tls: bool = Field(True, description="Use TLS for connections")
+    
+    model_config = ConfigDict(
+        env_prefix="POSTFIAT_",
+        case_sensitive=False
+    )
+
+# 🚧 Planned: Future wallet model (in development)
 class WalletModel(BaseModel):
     id: str = Field(..., description="Unique wallet identifier")
     balance: float = Field(ge=0, description="Wallet balance")
     created_at: datetime
     metadata: Optional[dict] = None
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "wallet_123",
                 "balance": 100.50,
                 "created_at": "2024-01-01T00:00:00Z"
             }
         }
+    )
 ```
 
 ### PydanticAI
@@ -223,21 +287,36 @@ class WalletModel(BaseModel):
 
 **Features:**
 ```python
+# 🚧 Planned: PydanticAI integration (example of planned functionality)
 from pydantic_ai import Agent
-from postfiat.models import WalletAnalysis, TransactionData
+from pydantic import BaseModel
+from typing import List
 
+# Example data models (would be generated from protobuf)
+class TransactionData(BaseModel):
+    amount: float
+    currency: str
+    timestamp: str
+    transaction_type: str
+
+class WalletAnalysis(BaseModel):
+    total_balance: float
+    transaction_count: int
+    insights: List[str]
+
+# Future integration example
 wallet_agent = Agent(
-    'openai:gpt-4',
-    result_type=WalletAnalysis,
+    'openai:gpt-4o',
+    output_type=WalletAnalysis,
     system_prompt="Analyze wallet transactions and provide insights."
 )
 
-async def analyze_wallet(transactions: list[TransactionData]) -> WalletAnalysis:
+async def analyze_wallet(transactions: List[TransactionData]) -> WalletAnalysis:
     result = await wallet_agent.run(
         f"Analyze these {len(transactions)} transactions",
         deps={"transactions": transactions}
     )
-    return result.data  # Type-safe WalletAnalysis object
+    return result.output
 ```
 
 ### SQLModel
@@ -270,16 +349,14 @@ class Wallet(SQLModel, table=True):
 ```mermaid
 classDiagram
     class MessageType {
-        CONTEXTUAL_MESSAGE
+        CORE_MESSAGE
         MULTIPART_MESSAGE_PART
-        RESERVED_100
     }
 
     class EncryptionMode {
         NONE
-        LEGACY_SHARED
-        NACL_SECRETBOX
-        NACL_BOX
+        PROTECTED
+        PUBLIC_KEY
     }
 
     class User {
@@ -381,8 +458,9 @@ logger.info(
 
 # Development: Beautiful console output via loguru
 # Production: JSON logs with structured context
-# {"user_id": "user_123", "request_id": "req_789",
-#  "event": "User authentication successful", ...}
+# {"event": "User authentication successful", "user_id": "user_123", 
+#  "session_id": "sess_456", "ip_address": "192.168.1.1", 
+#  "duration_ms": 150, "request_id": "req_789", "timestamp": "2024-01-01T12:00:00"}
 ```
 
 **Observability Strategy:**

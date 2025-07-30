@@ -2,7 +2,7 @@
 # 
 # Common development tasks for the PostFiat SDK
 
-.PHONY: help proto types tests tests-dynamic tests-core clean install dev-setup ts-build ts-test ts-test-all sol-deps sol-build sol-test sol-clean test bump-version bump-ts-version build-py build-ts build-sol docs release deps
+.PHONY: help proto types tests tests-dynamic tests-core tests-manual clean install dev-setup ts-build ts-test ts-test-all sol-deps sol-build sol-test sol-clean test bump-version bump-ts-version build-py build-ts build-sol docs release deps
 
 # Default target
 help:
@@ -20,6 +20,7 @@ help:
 	@echo "  tests        Run all tests (Python + TypeScript + Solidity, canonical)"
 	@echo "  tests-all    Run all generated and manual tests (Python + TypeScript + Solidity)"
 	@echo "  tests-manual Run manual tests only (Python)"
+	@echo "  tests-core   Run core dynamic Python tests only"
 	@echo "  ts-build     Build TypeScript SDK (npm run build)"
 	@echo "  ts-test      Run TypeScript tests (npm test)"
 	@echo "  ts-test-all  Run all TypeScript unit and integration tests"
@@ -76,6 +77,20 @@ deps:
 	else \
 		echo "✅ buf CLI tool already exists"; \
 	fi
+	@echo "🔧 Installing protoc-gen-doc..."
+	@if ! command -v go >/dev/null 2>&1; then \
+		echo "❌ Go not installed - required for protoc-gen-doc"; \
+		echo "📥 Please install Go from https://golang.org/dl/"; \
+		echo "⚠️  Documentation generation will be limited without protoc-gen-doc"; \
+	elif ! command -v protoc-gen-doc >/dev/null 2>&1; then \
+		echo "📥 Installing protoc-gen-doc..."; \
+		go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest && \
+		echo "✅ protoc-gen-doc installed successfully"; \
+	else \
+		echo "✅ protoc-gen-doc already installed"; \
+	fi
+	@echo "🔗 Setting up A2A proto dependency..."
+	@./scripts/setup-a2a-dependency.sh
 	@$(MAKE) sol-deps
 
 # Code generation
@@ -94,6 +109,14 @@ tests-dynamic:
 	@echo "🔄 Generating dynamic proto tests..."
 	cd python && python scripts/generate_dynamic_protobuf_tests.py
 
+tests-core:
+	@echo "🧪 Running core dynamic Python tests..."
+	cd python && python scripts/dev_test_regen.py --run-tests --core-only
+
+tests-manual:
+	@echo "🧪 Running manual Python tests..."
+	cd python && python -m pytest tests/manual/ -v
+
 # Testing
 # Canonical: run all tests in all languages
 tests:
@@ -104,7 +127,34 @@ tests:
 	@echo "🧪 Running all TypeScript unit and integration tests..."
 	cd typescript && (test -d node_modules || timeout 300 npm install) && npm run test:all
 	@echo "🧪 Running Solidity tests..."
-	cd solidity && export PATH="$$HOME/.foundry/bin:$$PATH" && forge test
+	@if command -v forge >/dev/null 2>&1; then \
+		cd solidity && forge test; \
+	elif [ -f "$$HOME/.foundry/bin/forge" ]; then \
+		cd solidity && $$HOME/.foundry/bin/forge test; \
+	elif [ -f "/home/runner/.foundry/bin/forge" ]; then \
+		cd solidity && /home/runner/.foundry/bin/forge test; \
+	elif [ -f "/home/runner/.cargo/bin/forge" ]; then \
+		cd solidity && /home/runner/.cargo/bin/forge test; \
+	elif [ -f "$$HOME/.cargo/bin/forge" ]; then \
+		cd solidity && $$HOME/.cargo/bin/forge test; \
+	else \
+		echo "❌ Foundry (forge) not found in any expected location:"; \
+		echo "   - Not in PATH"; \
+		echo "   - Not in $$HOME/.foundry/bin/"; \
+		echo "   - Not in /home/runner/.foundry/bin/"; \
+		echo "   - Not in $$HOME/.cargo/bin/"; \
+		echo "   - Not in /home/runner/.cargo/bin/"; \
+		echo ""; \
+		echo "🔍 Available binaries in common locations:"; \
+		ls -la $$HOME/.foundry/bin/ 2>/dev/null || echo "   ~/.foundry/bin/ does not exist"; \
+		ls -la /home/runner/.foundry/bin/ 2>/dev/null || echo "   /home/runner/.foundry/bin/ does not exist"; \
+		ls -la $$HOME/.cargo/bin/ 2>/dev/null || echo "   ~/.cargo/bin/ does not exist"; \
+		echo ""; \
+		echo "⚠️  Foundry installation failed or installed to unexpected location"; \
+		echo "   In CI, ensure 'foundry-rs/foundry-toolchain' action is working properly"; \
+		echo "   Manual install: curl -L https://foundry.paradigm.xyz | bash && foundryup"; \
+		exit 1; \
+	fi
 	@echo "✅ All Python, TypeScript, and Solidity tests completed!"
 
 test: tests
@@ -120,10 +170,6 @@ tests-all:
 	@echo "🧪 Running Solidity tests..."
 	cd solidity && export PATH="$$HOME/.foundry/bin:$$PATH" && forge test
 	@echo "✅ All Python, TypeScript, and Solidity tests completed!"
-
-tests-manual:
-	@echo "🧪 Running manual tests..."
-	cd python && python -m pytest tests/manual/ -v
 
 # TypeScript build and test
 ts-build:
@@ -195,11 +241,11 @@ docs: deps
 	# Generate OpenAPI specification from protobuf
 	cd proto && ../bin/buf generate --template buf.gen.openapi-only.yaml
 	# Generate protobuf documentation and copy API specs
-	python scripts/generate_docs.py
+	python3 scripts/generate_docs.py
 	# TypeScript codegen (ensure src/index.ts exists)
 	cd typescript && npm run generate:all
 	# TypeScript API docs (TypeDoc)
-	cd typescript && npx typedoc --out ../docs/generated/typescript src/index.ts --plugin typedoc-plugin-markdown --theme markdown --skipErrorChecking
+	cd typescript && npx typedoc --out ../docs/generated/typescript src/index.ts --plugin typedoc-plugin-markdown --theme markdown --skipErrorChecking --entryFileName index.md
 	# Update documentation with current version info
 	@echo "🔢 Updating documentation versions..."
 	@./scripts/update-all-versions.sh > /dev/null 2>&1 || echo "⚠️  Version update had some warnings (proto generation issues - this is normal)"
